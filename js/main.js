@@ -43,12 +43,8 @@ function resetHighlight(e) {
     e.target.closePopup();
 }
 
-function openInfoBox(e) {
-    if (e.target.feature && e.target.feature.properties) {
-        info.update(e.target.feature.properties);
-    } else {
-        info.update()
-    }
+function movePopup(e) {
+    e.target.getPopup().setLatLng(e.latlng).openOn(map);
 }
 
 function zoomToFeature(e) {
@@ -70,10 +66,9 @@ function onEachFeature(feature, layer) {
         mouseover: highlightFeature,
         mouseout: resetHighlight,
         dblclick: zoomToFeature,
-        click: openInfoBox
+        mousemove: movePopup
     });
 }
-map.on({click: openInfoBox});
 
 // Load regions
 function loadJSON(url, callback) {
@@ -100,32 +95,6 @@ loadJSON("data/geojson/domerat.json", function (data) {
 });
 
 
-// Info window
-var info = L.control();
-
-info.onAdd = function (map) {
-    this._div = L.DomUtil.create('div', 'info');
-    this.update();
-    return this._div;
-};
-
-info.update = function (props) {
-    if (props) {
-        this._div.innerHTML = 
-        '<h3>' + props.name + '</h3>' +
-        'Population: ' + props.population + '<br/>' +
-        'Suspectés: ' + props.suspected + ' (' + Math.trunc(1000 * props.suspected / props.population) + '‰)<br/>' +
-        'Confirmés: ' + props.confirmed + ' (' + Math.trunc(1000 * props.confirmed / props.population) + '‰)<br/>' +
-        'Guéris: ' + props.recovered + ' (' + Math.trunc(1000 * props.recovered / props.population) + '‰)<br/>' +
-        'Morts: ' + props.dead + ' (' + Math.trunc(1000 * props.dead / props.population) + '‰)<br/>'
-    } else {
-        this._div.innerHTML = ''
-    }
-};
-
-info.addTo(map);
-
-
 // Legend
 var legend = L.control({position: 'bottomright'});
 
@@ -134,7 +103,7 @@ legend.onAdd = function (map) {
     var div = L.DomUtil.create('div', 'info legend'),
         grades = [0, 2, 5, 10, 20, 50];
 
-    // loop through our density intervals and generate a label with a colored square for each interval
+    div.innerHTML = '<h3>Cas suspectés</h3>'
     for (var i = 0; i < grades.length; i++) {
         div.innerHTML += 
             '<i style="opacity:' + getOpacity(grades[i]) + '"></i> ' +
