@@ -11,7 +11,7 @@
         <meta name="description" content="" />
         <meta name="keywords" content="" />
         <!-- registered metadata names (see http://wiki.whatwg.org/wiki/MetaExtensions) -->
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <meta name="publisher" content="" />
         <meta name="reply-to" content="" />
         <meta name="contact" content="" />
@@ -33,10 +33,17 @@
         <meta name="content-script-type" content="text/javascript" />
         <meta name="content-style-type" content="text/css" />
         <meta name="robots" content="index, follow, noarchive" />
-        <meta name="revisit-after" content="15 days" />
+        <meta name="revisit-after" content="1 days" />
 
         <!-- Styles -->
-        <link rel="icon" type="image/x-icon" href="favicon.ico" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        <link rel="manifest" href="/site.webmanifest" />
+        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5" />
+        <meta name="msapplication-TileColor" content="#da532c" />
+        <meta name="theme-color" content="#ffffff" />
+        <link rel="stylesheet" type="text/css" href="css/main.css" />
         <link rel="stylesheet" type="text/css" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
                                integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
                                crossorigin=""/>
@@ -48,47 +55,9 @@
     </head>
 
     <body>
-        <header>
-        </header>
-
-        <nav>
-            <ul>
-            </ul>
-        </nav>
-
-        <main>
-            <section>
-                 <div id="mapid" style="position: absolute; top: 0; bottom: 0; right: 0; left: 0;"></div>
-            </section>
-        </main>
-
-        <aside>
-
-        </aside>
-
-        <footer>
-
-            <address>
-            </address>
-        </footer>
-
-        <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
-        <script type="text/javascript">
-            var mymap = L.map('mapid').setView([46.3428, 2.6077], 10);
-
-L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
-	maxZoom: 18,
-	attribution: 'Map data copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
-	'<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
-	'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-	id: 'mapbox/streets-v11',
-	tileSize: 512,
-	zoomOffset: -1
-}).addTo(mymap);
-        </script>
-        <noscript>
-
-        </noscript>
+        <main id="mapid" style="position: absolute; top: 0; bottom: 0; right: 0; left: 0;" />
+        <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin="" />
+        <script type="text/javascript" src="js/main.js" />
     </body>
 
 </html>
