@@ -10,7 +10,7 @@ OpenStreetMap_HOT.addTo(map);
 
 // Style
 function getOpacity(n) {
-    return 0.5 - 0.5 * Math.exp(-n/10)
+    return n ? 0.5 - 0.5 * Math.exp(-n/10) : 0;
 }
 function style (feature) {
     return {
@@ -53,15 +53,16 @@ function zoomToFeature(e) {
 
 function onEachFeature(feature, layer) {
     var props = feature.properties;
-    layer.bindPopup(
-        '<h3>' + props.name + '</h3>' +
+    popupText = '<h3>' + 
+        (props.blason ? '<img class="thumbnail" src="' + props.blason + '" /> ' : '') + 
+        props.name + '</h3>' +
         'Population: ' + props.population + '<br/>' +
-        'Suspectés: ' + props.suspected + ' (' + Math.trunc(1000 * props.suspected / props.population) + '‰)<br/>' +
-        'Confirmés: ' + props.confirmed + ' (' + Math.trunc(1000 * props.confirmed / props.population) + '‰)<br/>' +
-        'Guéris: ' + props.recovered + ' (' + Math.trunc(1000 * props.recovered / props.population) + '‰)<br/>' +
-        'Morts: ' + props.dead + ' (' + Math.trunc(1000 * props.dead / props.population) + '‰)<br/>',
-        {closeButton: false}
-    );
+        (props.suspected ? 'Suspectés: ' + props.suspected + ' (' + Math.trunc(1000 * props.suspected / props.population) + '‰)<br/>' : '') +
+        (props.confirmed ? 'Confirmés: ' + props.confirmed + ' (' + Math.trunc(1000 * props.confirmed / props.population) + '‰)<br/>' : '') +
+        (props.recovered ? 'Guéris: ' + props.recovered + ' (' + Math.trunc(1000 * props.recovered / props.population) + '‰)<br/>' : '') +
+        (props.dead ? 'Morts: ' + props.dead + ' (' + Math.trunc(1000 * props.dead / props.population) + '‰)<br/>' : '') +
+        (props.comments ? '<br/>' + props.comments : '');
+    layer.bindPopup(popupText, {closeButton: false, autoPan: false});
     layer.on({
         mouseover: highlightFeature,
         mouseout: resetHighlight,
@@ -83,15 +84,9 @@ function loadJSON(url, callback) {
     };
     xobj.send(null);  
  }
-var zones = L.geoJson([], {style: style, onEachFeature: onEachFeature}).addTo(map)
-loadJSON("data/geojson/montlucon.json", function (data) {
-    zones.addData(data)
-});
-loadJSON("data/geojson/saint-victor.json", function (data) {
-    zones.addData(data)
-});
-loadJSON("data/geojson/domerat.json", function (data) {
-    zones.addData(data)
+var zones;
+loadJSON("data/Montluçon_AL8_extra.GeoJson", function (data) {
+    zones = L.geoJson(data, {style: style, onEachFeature: onEachFeature}).addTo(map)
 });
 
 
