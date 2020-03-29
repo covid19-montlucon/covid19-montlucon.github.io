@@ -32,9 +32,6 @@ function highlightFeature(e) {
         //fillOpacity: 0.7
     });
 
-    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-        layer.bringToFront();
-    }
     layer.openPopup();
 }
 
@@ -53,6 +50,7 @@ function zoomToFeature(e) {
 
 function onEachFeature(feature, layer) {
     var props = feature.properties;
+
     popupText = '<h3>' + 
         (props.blason ? '<img class="thumbnail" src="' + props.blason + '" /> ' : '') + 
         props.name + '</h3>' +
@@ -63,6 +61,26 @@ function onEachFeature(feature, layer) {
         (props.dead ? 'Morts: ' + props.dead + ' (' + Math.trunc(1000 * props.dead / props.population) + '‰)<br/>' : '') +
         (props.comments ? '<br/>' + props.comments : '');
     layer.bindPopup(popupText, {closeButton: false, autoPan: false});
+
+    if (props.suspected + props.confirmed + props.recovered + props.dead > 0) {
+        var ntot = props.suspected + props.confirmed + props.recovered + props.dead;
+        var angles = [0, props.recovered, props.suspected, props.confirmed, props.dead];
+        var colors = ['#00ff00', '#00ffff', '#0000ff', '#ff0000']
+        for (var i = 1; i < angles.length; ++i)
+            angles[i] += angles[i-1] + 0.01; // 0.01 to avoid having one complete turn if null
+        for (var i = 1; i < angles.length; ++i)
+            angles[i] = 360 * angles[i] / ntot;
+        for (var i = 0; i < angles.length-1; ++i) {
+            circles.push(L.semiCircleMarker(
+                [props.coordinates.latitude, props.coordinates.longitude],
+                {radius: 3*Math.sqrt(ntot), interactive: false,
+                    stroke: true, color: '#444444', weight: 1, opacity: 1,
+                    fill: true, fillOpacity: 0.7,
+                    fillColor: colors[i], startAngle: angles[i], stopAngle: angles[i+1]}
+            ));
+        }
+    }
+
     layer.on({
         mouseover: highlightFeature,
         mouseout: resetHighlight,
@@ -85,8 +103,11 @@ function loadJSON(url, callback) {
     xobj.send(null);  
  }
 var zones;
+var circles = [];
 loadJSON("data/Montluçon_AL8_extra.GeoJson", function (data) {
-    zones = L.geoJson(data, {style: style, onEachFeature: onEachFeature}).addTo(map)
+    zones = L.geoJson(data, {style: style, onEachFeature: onEachFeature}).addTo(map);
+    circles = L.layerGroup(circles);
+    circles.addTo(map);
 });
 
 
