@@ -15,7 +15,9 @@ function getOpacity(n) {
 function style (feature) {
     return {
         color: "#000000",
-        opacity: 0,
+        weight: 2,
+        opacity: 0.1,
+        dashArray: 9,
         fillColor: feature.properties.confirmed > 0 ? "#ff0000" : "#000000",
         fillOpacity: getOpacity(feature.properties.confirmed),
     };
@@ -89,6 +91,14 @@ function onEachFeature(feature, layer) {
     });
 }
 
+function zoomUpdate(e) {
+    if (map.getZoom() > 10)
+        circles.addTo(map);
+    else
+        circles.removeFrom(map);
+}
+map.on({zoomend: zoomUpdate});
+
 // Load regions
 function loadJSON(url, callback) {
     var xobj = new XMLHttpRequest();
@@ -102,6 +112,9 @@ function loadJSON(url, callback) {
     };
     xobj.send(null);  
  }
+loadJSON("data/Montluçon_AL7.GeoJson", function (data) {
+    L.geoJson(data, {style: {color: '#000000', weight: 3, dashArray: 10, opacity: 0.5, fill: false}}).addTo(map);
+});
 var zones;
 var circles = [];
 loadJSON("data/Montluçon_AL8_extra.GeoJson", function (data) {
