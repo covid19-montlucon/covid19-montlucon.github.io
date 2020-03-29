@@ -10,13 +10,30 @@
 .legend {
     line-height: 18px;
     color: #555;
+    padding-inline: 20px;
 }
-.legend i {
-    width: 18px;
+.legend h3 {
+    line-height: 0px;
+    text-align: center;
+    margin-block-end: 8px;
+}
+.legend .grad {
+    width: 100%;
     height: 18px;
     float: left;
-    margin-right: 8px;
-    background: #ff0000;
+    background: linear-gradient(to right, transparent, red);
+}
+.legend b {
+    padding-inline: 20px;
+    float: left;
+    width: 0px;
+}
+.legend b#start {
+    padding-inline-start: 0px;
+}
+.legend b#end {
+    padding-inline-end: 0px;
+    float: none;
 }
 
 .thumbnail {
