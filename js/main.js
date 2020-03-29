@@ -1,25 +1,53 @@
 
+
 // Load the map
 var map = L.map('mapid').setView([46.3428, 2.6077], 11);
-var OpenStreetMap_HOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-	maxZoom: 19,
-	attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a> hosted by <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap France</a>'
+var CartoDB_PositronNoLabels = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+	attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, © <a href="https://carto.com/attributions">CARTO</a>',
+	subdomains: 'abcd',
+	maxZoom: 19
 });
-OpenStreetMap_HOT.addTo(map);
+var OpenMapSurfer_AdminBounds = L.tileLayer('https://maps.heigit.org/openmapsurfer/tiles/adminb/webmercator/{z}/{x}/{y}.png', {
+	maxZoom: 18,
+	attribution: 'Imagery from <a href="http://giscience.uni-hd.de/">GIScience Research Group @ University of Heidelberg</a>'
+});
+CartoDB_PositronNoLabels.addTo(map);
+OpenMapSurfer_AdminBounds.addTo(map);
+
+
+// Legend
+var legend = L.control({position: 'bottomright'});
+
+legend.onAdd = function (map) {
+    var div = L.DomUtil.create('div', 'info legend');
+
+    var html  = '<h3>Cas suspectés</h3>';
+    html += '<i class="grad"></i><br/>';
+    html += '<b id="start">0</b>';
+    html += '<b>25</b>';
+    html += '<b>50</b>';
+    html += '<b>100</b>';
+    html += '<b id="end">200</b>';
+    div.innerHTML = html;
+
+    return div;
+};
+
+legend.addTo(map);
+
+L.control.scale({metric: true, imperial: false}).addTo(map);
 
 
 // Style
-function getOpacity(n) {
-    return n ? 0.5 - 0.5 * Math.exp(-n/10) : 0;
-}
 function style (feature) {
     return {
-        color: "#000000",
-        weight: 2,
-        opacity: 0.1,
+        opacity: 0,
         dashArray: 9,
         fillColor: feature.properties.confirmed > 0 ? "#ff0000" : "#000000",
-        fillOpacity: getOpacity(feature.properties.confirmed),
+        fillOpacity: (
+            !feature.properties.suspected ? 0 : 
+            feature.properties.suspected < 25 ? feature.properties.suspected / 25 / 4 : 
+            feature.properties.suspected < 200 ? Math.log(16/200*feature.properties.suspected)/4/Math.LN2 : 1)
     };
 }
 
@@ -28,10 +56,10 @@ function highlightFeature(e) {
 
     layer.setStyle({
         weight: 3,
-        opacity: 0.3,
+        opacity: 0.5,
         color: '#000000',
         dashArray: '',
-        //fillOpacity: 0.7
+        fillColor: '#ff4444'
     });
 
     layer.openPopup();
@@ -62,7 +90,7 @@ function onEachFeature(feature, layer) {
         (props.recovered ? 'Guéris: ' + props.recovered + ' (' + Math.trunc(1000 * props.recovered / props.population) + '‰)<br/>' : '') +
         (props.dead ? 'Morts: ' + props.dead + ' (' + Math.trunc(1000 * props.dead / props.population) + '‰)<br/>' : '') +
         (props.comments ? '<br/>' + props.comments : '');
-    layer.bindPopup(popupText, {closeButton: false, autoPan: false});
+    layer.bindPopup(popupText, {closeButton: false, autoPan: false, offset: [0,-10]});
 
     if (props.suspected + props.confirmed + props.recovered + props.dead > 0) {
         var ntot = props.suspected + props.confirmed + props.recovered + props.dead;
@@ -92,10 +120,11 @@ function onEachFeature(feature, layer) {
 }
 
 function zoomUpdate(e) {
-    if (map.getZoom() > 10)
+    if (map.getZoom() > 10) {
         circles.addTo(map);
-    else
+    } else {
         circles.removeFrom(map);
+    }
 }
 map.on({zoomend: zoomUpdate});
 
@@ -112,9 +141,6 @@ function loadJSON(url, callback) {
     };
     xobj.send(null);  
  }
-loadJSON("data/Montluçon_AL7.GeoJson", function (data) {
-    L.geoJson(data, {style: {color: '#000000', weight: 3, dashArray: 10, opacity: 0.5, fill: false}}).addTo(map);
-});
 var zones;
 var circles = [];
 loadJSON("data/Montluçon_AL8_extra.GeoJson", function (data) {
@@ -123,26 +149,4 @@ loadJSON("data/Montluçon_AL8_extra.GeoJson", function (data) {
     circles.addTo(map);
 });
 
-
-// Legend
-var legend = L.control({position: 'bottomright'});
-
-legend.onAdd = function (map) {
-
-    var div = L.DomUtil.create('div', 'info legend'),
-        grades = [0, 2, 5, 10, 20, 50];
-
-    div.innerHTML = '<h3>Cas suspectés</h3>'
-    for (var i = 0; i < grades.length; i++) {
-        div.innerHTML += 
-            '<i style="opacity:' + getOpacity(grades[i]) + '"></i> ' +
-            grades[i] + (grades[i + 1] ? '-' + grades[i + 1] + '<br/>' : '+');
-    }
-
-    return div;
-};
-
-legend.addTo(map);
-
-L.control.scale().addTo(map);
 
