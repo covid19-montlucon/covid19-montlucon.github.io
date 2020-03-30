@@ -68,7 +68,7 @@ function adminBoundaryInit(feature, layer) {
     layer.bindPopup(popupText, {closeButton: false, autoPan: false, offset: [0,-10]});
 
     layer.on({
-        mouseover: e => e.target.setStyle(adminBoundaryStyleHighlight(e.target.feature)).openPopup(),
+        mouseover: e => e.target.setStyle(adminBoundaryStyleHighlight(e.target.feature)).openPopup(e.latlng),
         mouseout: e => adminBoundariesLayer.resetStyle(e.target.closePopup()),
         mousemove: e => e.target.getPopup().setLatLng(e.latlng).openOn(map),
         dblclick: e => map.fitBounds(e.target.getBounds())
