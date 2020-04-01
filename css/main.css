@@ -22,6 +22,7 @@
     height: 18px;
     float: left;
     background: linear-gradient(to right, transparent, red);
+    cursor: pointer;
 }
 .legend b {
     padding-inline: 20px;

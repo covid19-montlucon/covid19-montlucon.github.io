@@ -87,24 +87,42 @@ var legend = L.control({position: 'bottomright'});
 legend.onAdd = function (map) {
     var div = L.DomUtil.create('div', 'info legend');
 
-    var html  = '<h3>Cas suspectés</h3>';
-    html += '<i class="grad"></i><br/>';
-    html += '<b id="start">0</b>';
-    html += '<b>25</b>';
-    html += '<b>50</b>';
-    html += '<b>100</b>';
-    html += '<b id="end">200</b>';
-    div.innerHTML = html;
+    div.innerHTML = legendHtml(false);
+    div.percent = false;
+    div.onclick = function () {
+        div.percent = !div.percent;
+        div.innerHTML = legendHtml(div.percent);
+        adminBoundaryStyleSel = div.percent ? adminBoundaryStyleSuspectedPercent : adminBoundaryStyleSuspected;
+        adminBoundariesLayer.resetStyle();
+    }
 
     return div;
 };
+function legendHtml(percent) {
+    var html  = '<h3>Cas suspectés</h3>';
+    html += '<i class="grad"></i><br/>';
+    if (percent) {
+        html += '<b id="start">0%</b>';
+        html += '<b>25%</b>';
+        html += '<b>50%</b>';
+        html += '<b>75%</b>';
+        html += '<b id="end">100%</b>';
+    } else {
+        html += '<b id="start">0</b>';
+        html += '<b>25</b>';
+        html += '<b>50</b>';
+        html += '<b>100</b>';
+        html += '<b id="end">200</b>';
+    }
+    return html;
+}
 legend.addTo(map);
 
 L.control.scale({metric: true, imperial: false}).addTo(map);
 
 
 // Style
-function adminBoundaryStyle(feature) {
+function adminBoundaryStyleSuspected(feature) {
     return {
         opacity: 0,
         dashArray: 9,
@@ -114,6 +132,21 @@ function adminBoundaryStyle(feature) {
             feature.properties.suspected < 25 ? feature.properties.suspected / 25 / 4 : 
             feature.properties.suspected < 200 ? Math.log(16/200*feature.properties.suspected)/4/Math.LN2 : 1)
     };
+}
+function adminBoundaryStyleSuspectedPercent(feature) {
+    return {
+        opacity: 0,
+        dashArray: 9,
+        fillColor: feature.properties.total > 0 ? '#ff0000' : '#000000',
+        fillOpacity: (
+            !feature.properties.suspected ? 0 : 
+            feature.properties.suspected / feature.properties.population)
+    };
+}
+adminBoundaryStyleSel = undefined;
+function adminBoundaryStyle(feature) {
+    if (!adminBoundaryStyleSel) { adminBoundaryStyleSel = adminBoundaryStyleSuspected; }
+    return adminBoundaryStyleSel(feature);
 }
 
 function adminBoundaryStyleHighlight(feature) {
