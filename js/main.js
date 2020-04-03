@@ -8,14 +8,15 @@ let cases = [];
 let viewConfig = {
     filter: undefined,
     percent: false,
-    criteria: 'suspected',
-    collapsed: true,
+    criteria: 'possible',
+    collapsed: false,
     colors: {
         total: '#000000',
-        suspected: '#6ec5e4',
-        confirmed: '#3e95cd',
-        recovered: '#3cba9f',
-        dead: '#c45850'
+        possible: '#bedde9',
+        probable: '#6ec5e4',
+        certain: '#3e95cd',
+        gueri: '#3cba9f',
+        mort: '#c45850'
     }
 };
 
@@ -111,18 +112,19 @@ setInterval(reloadListCases, 1800000); // Reload every 30 minutes
 
 function updateView() {
     let counts = {};
-    let chartPieData = {'suspected': 0, 'confirmed': 0, 'recovered': 0, 'dead': 0};
+    let chartPieData = {'possible': 0, 'probable': 0, 'certain': 0, 'gueri': 0, 'mort': 0};
     let chartAgeData = {
         'total': [0,0,0,0,0,0,0,0,0,0],
-        'suspected': [0,0,0,0,0,0,0,0,0,0],
-        'confirmed': [0,0,0,0,0,0,0,0,0,0],
-        'recovered': [0,0,0,0,0,0,0,0,0,0],
-        'dead': [0,0,0,0,0,0,0,0,0,0]
+        'possible': [0,0,0,0,0,0,0,0,0,0],
+        'probable': [0,0,0,0,0,0,0,0,0,0],
+        'certain': [0,0,0,0,0,0,0,0,0,0],
+        'gueri': [0,0,0,0,0,0,0,0,0,0],
+        'mort': [0,0,0,0,0,0,0,0,0,0]
     };
     for (let cas of cases) {
         let loc = cas['Domicile'];
         if (!(loc in counts)) {
-            counts[loc] = {'total': 0, 'suspected': 0, 'confirmed': 0, 'recovered': 0, 'dead': 0};
+            counts[loc] = {'total': 0, 'possible': 0, 'probable': 0, 'certain': 0, 'gueri': 0, 'mort': 0};
         }
         let filtered = (viewConfig.filter ? viewConfig.filter(cas) : viewFilterDefault(cas));
         if (filtered) {
@@ -138,7 +140,7 @@ function updateView() {
     for (let feature of boundaries.toGeoJSON().features) {
         let loc = feature.properties.name;
         if (counts[loc]) {
-            feature.properties.countCases = counts[loc].confirmed + counts[loc].suspected;
+            feature.properties.countCases = counts[loc].certain + counts[loc].possible;
             feature.properties.popup = genPopup(feature, counts[loc]);
             piecharts.addLayer(genPiechart(feature, counts[loc]));
             delete counts[loc];
@@ -158,10 +160,10 @@ function updateView() {
         let chartPie = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Suspectés', 'Confirmés', 'Guéris', 'Morts'],
+                labels: ['Possible', 'Probable', 'Certain', 'Guéris', 'Morts'],
                 datasets: [{
-                    backgroundColor: [viewConfig.colors.suspected, viewConfig.colors.confirmed, viewConfig.colors.recovered, viewConfig.colors.dead],
-                    data: [chartPieData.suspected, chartPieData.confirmed, chartPieData.recovered, chartPieData.dead]
+                    backgroundColor: [viewConfig.colors.possible, viewConfig.colors.probable, viewConfig.colors.certain, viewConfig.colors.gueri, viewConfig.colors.mort],
+                    data: [chartPieData.possible, chartPieData.probable, chartPieData.certain, chartPieData.gueri, chartPieData.mort]
                 }]
             },
             options: {
@@ -177,10 +179,11 @@ function updateView() {
             data: {
                 labels: [0,10,20,30,40,50,60,70,80,90,100],
                 datasets: [
-                    {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.dead, label: 'Morts', data: chartAgeData['dead']},
-                    {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.recovered, label: 'Guéris', data: chartAgeData['recovered']},
-                    {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.confirmed, label: 'Confirmés', data: chartAgeData['confirmed']},
-                    {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.suspected, label: 'Suspectés', data: chartAgeData['suspected']},
+                    {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.mort, label: 'Morts', data: chartAgeData['mort']},
+                    {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.gueri, label: 'Guéris', data: chartAgeData['gueri']},
+                    {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.certain, label: 'Certain', data: chartAgeData['certain']},
+                    {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.probable, label: 'Probable', data: chartAgeData['probable']},
+                    {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.possible, label: 'Possible', data: chartAgeData['possible']},
                 ]
             },
             options: {
@@ -325,10 +328,11 @@ function genViewSelect() {
 function genPopup(feature, cases = {}) {
     let population = feature.properties.population || 0;
     let total = cases.total || 0;
-    let suspected = cases.suspected || 0;
-    let confirmed = cases.confirmed || 0;
-    let recovered = cases.recovered || 0;
-    let dead = cases.dead || 0;
+    let possible = cases.possible || 0;
+    let probable = cases.probable || 0;
+    let certain = cases.certain || 0;
+    let gueri = cases.gueri || 0;
+    let mort = cases.mort || 0;
 
     let elbase = document.createElement('div');
     {
@@ -347,17 +351,20 @@ function genPopup(feature, cases = {}) {
     elbase.appendChild(document.createTextNode(population.toLocaleString()));
     elbase.appendChild(document.createElement('br'));
     if (total) {
-        elbase.appendChild(document.createTextNode('Suspectés : '));
-        elbase.appendChild(document.createTextNode(suspected.toLocaleString()));
+        elbase.appendChild(document.createTextNode('Possible : '));
+        elbase.appendChild(document.createTextNode(possible.toLocaleString()));
         elbase.appendChild(document.createElement('br'));
-        elbase.appendChild(document.createTextNode('Confirmés : '));
-        elbase.appendChild(document.createTextNode(confirmed.toLocaleString()));
+        elbase.appendChild(document.createTextNode('Probable : '));
+        elbase.appendChild(document.createTextNode(probable.toLocaleString()));
+        elbase.appendChild(document.createElement('br'));
+        elbase.appendChild(document.createTextNode('Certain : '));
+        elbase.appendChild(document.createTextNode(certain.toLocaleString()));
         elbase.appendChild(document.createElement('br'));
         elbase.appendChild(document.createTextNode('Guéris : '));
-        elbase.appendChild(document.createTextNode(recovered.toLocaleString()));
+        elbase.appendChild(document.createTextNode(gueri.toLocaleString()));
         elbase.appendChild(document.createElement('br'));
         elbase.appendChild(document.createTextNode('Morts : '));
-        elbase.appendChild(document.createTextNode(dead.toLocaleString()));
+        elbase.appendChild(document.createTextNode(mort.toLocaleString()));
         elbase.appendChild(document.createElement('br'));
     }
     return elbase;
@@ -368,14 +375,15 @@ function genPiechart(feature, cases = {}) {
 
     let population = feature.properties.population || 0;
     let total = cases.total || 0;
-    let suspected = cases.suspected || 0;
-    let confirmed = cases.confirmed || 0;
-    let recovered = cases.recovered || 0;
-    let dead = cases.dead || 0;
+    let possible = cases.possible || 0;
+    let probable = cases.probable || 0;
+    let certain = cases.certain || 0;
+    let gueri = cases.gueri || 0;
+    let mort = cases.mort || 0;
 
     if (total) {
-        let angles = [0, recovered, suspected, confirmed, dead];
-        let colors = ['#00ff00', '#00ffff', '#0000ff', '#ff0000']
+        let angles = [0, gueri, possible, probable, certain, mort];
+        let colors = [viewConfig.colors.gueri, viewConfig.colors.possible, viewConfig.colors.probable, viewConfig.colors.certain, viewConfig.colors.mort]
         let marker = L.layerGroup();
         for (let i = 1; i < angles.length; ++i)
             angles[i] += angles[i-1];
@@ -401,7 +409,7 @@ function genPiechart(feature, cases = {}) {
 }
 
 function viewFilterDefault(cas) {
-    if (['suspected', 'confirmed', 'recovered', 'dead'].indexOf(cas['Condition']) >= 0) {
+    if (['possible', 'probable', 'certain', 'gueri', 'mort'].indexOf(cas['Condition']) >= 0) {
         return cas;
     } else {
         console.warn('Unknown condition "' + cas['Condition'] + '".');
