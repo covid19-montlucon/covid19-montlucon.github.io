@@ -243,7 +243,7 @@ function boundaryStyle(feature, highlight = false) {
         };
     }
     if (viewConfig.percent) {
-        style.fillOpacity = count / feature.properties.population;
+        style.fillOpacity = 50*count / feature.properties.population;
     } else {
         if (count < 25) {
             style.fillOpacity = count / 25 / 4;
@@ -261,10 +261,10 @@ function genLegendHTML() {
     html += '<i class="grad"></i><br/>';
     if (viewConfig.percent) {
         html += '<b id="start">0%</b>';
-        html += '<b>25%</b>';
-        html += '<b>50%</b>';
-        html += '<b>75%</b>';
-        html += '<b id="end">100%</b>';
+        html += '<b>0.5%</b>';
+        html += '<b>1%</b>';
+        html += '<b>1.5%</b>';
+        html += '<b id="end">2%</b>';
     } else {
         html += '<b id="start">0</b>';
         html += '<b>25</b>';
