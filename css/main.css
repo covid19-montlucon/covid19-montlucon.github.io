@@ -1,6 +1,5 @@
 
 .info {
-    padding: 6px 8px;
     background: white;
     background: rgba(255,255,255,0.8);
     box-shadow: 0 0 15px rgba(0,0,0,0.2);
@@ -16,9 +15,10 @@
 }
 
 .legend {
-    line-height: 18px;
+    line-height: 14px;
     color: #555;
-    padding-inline: 20px;
+    padding-inline: 12px;
+    padding-top: 5px;
 }
 .legend h3 {
     line-height: 0px;
@@ -27,10 +27,9 @@
 }
 .legend .grad {
     width: 100%;
-    height: 18px;
+    height: 12px;
     float: left;
     background: linear-gradient(to right, transparent, red);
-    cursor: pointer;
 }
 .legend b {
     padding-inline: 20px;
