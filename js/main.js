@@ -8,12 +8,20 @@ let cases = [];
 let viewConfig = {
     filter: undefined,
     percent: false,
-    criteria: 'suspected'
+    criteria: 'suspected',
+    collapsed: true,
+    colors: {
+        total: '#000000',
+        suspected: '#6ec5e4',
+        confirmed: '#3e95cd',
+        recovered: '#3cba9f',
+        dead: '#c45850'
+    }
 };
 
 
 // Load the map
-let map = L.map('mapid').setView([46.3428, 2.6077], 11);
+let map = L.map('mapid', {center: [46.3428, 2.6077], zoom: 11, zoomControl: false});
 let CartoDB_PositronNoLabels = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
 	attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, © <a href="https://carto.com/attributions">CARTO</a>',
 	subdomains: 'abcd',
@@ -46,11 +54,13 @@ legend.onAdd = function (map) {
 };
 legend.addTo(map);
 
-L.control.scale({metric: true, imperial: false}).addTo(map);
+L.control.scale({metric: true, imperial: false, position: 'bottomleft'}).addTo(map);
 
 let viewSelect = L.control({position: 'topright'});
 viewSelect.onAdd = genViewSelect;
 viewSelect.addTo(map);
+
+L.control.zoom({position: 'topright'}).addTo(map);
 
 
 
@@ -101,6 +111,14 @@ setInterval(reloadListCases, 1800000); // Reload every 30 minutes
 
 function updateView() {
     let counts = {};
+    let chartPieData = {'suspected': 0, 'confirmed': 0, 'recovered': 0, 'dead': 0};
+    let chartAgeData = {
+        'total': [0,0,0,0,0,0,0,0,0,0],
+        'suspected': [0,0,0,0,0,0,0,0,0,0],
+        'confirmed': [0,0,0,0,0,0,0,0,0,0],
+        'recovered': [0,0,0,0,0,0,0,0,0,0],
+        'dead': [0,0,0,0,0,0,0,0,0,0]
+    };
     for (let cas of cases) {
         let loc = cas['Domicile'];
         if (!(loc in counts)) {
@@ -110,6 +128,10 @@ function updateView() {
         if (filtered) {
             counts[loc]['total'] += 1;
             counts[loc][filtered['Condition']] += 1;
+
+            chartPieData[filtered['Condition']] += 1;
+            chartAgeData['total'][Math.floor(filtered['Age']/10)] += 1;
+            chartAgeData[filtered['Condition']][Math.floor(filtered['Age']/10)] += 1;
         }
     }
     piecharts.clearLayers();
@@ -130,6 +152,44 @@ function updateView() {
     boundaries.resetStyle();
 
     legend.getContainer().innerHTML = genLegendHTML(viewConfig.percent);
+
+    {
+        let ctx = document.getElementById('chart-pie');
+        let chartPie = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Suspectés', 'Confirmés', 'Guéris', 'Morts'],
+                datasets: [{
+                    backgroundColor: [viewConfig.colors.suspected, viewConfig.colors.confirmed, viewConfig.colors.recovered, viewConfig.colors.dead],
+                    data: [chartPieData.suspected, chartPieData.confirmed, chartPieData.recovered, chartPieData.dead]
+                }]
+            },
+            options: {
+                legend: {display: false},
+                title: {display: true, text: 'Proportion globales'}
+            }
+        });
+    }
+    {
+        let ctx = document.getElementById('chart-age');
+        let chartAge = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [0,10,20,30,40,50,60,70,80,90,100],
+                datasets: [
+                    {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.dead, label: 'Morts', data: chartAgeData['dead']},
+                    {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.recovered, label: 'Guéris', data: chartAgeData['recovered']},
+                    {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.confirmed, label: 'Confirmés', data: chartAgeData['confirmed']},
+                    {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.suspected, label: 'Suspectés', data: chartAgeData['suspected']},
+                ]
+            },
+            options: {
+                legend: {display: false},
+                title: {display: true, text: 'Age (aires empillées)'},
+                scales: {yAxes: [{ stacked: true }]}
+            }
+        });
+    }
 }
 
 function boundaryInit(feature, layer) {
@@ -346,6 +406,21 @@ function viewFilterDefault(cas) {
     } else {
         console.warn('Unknown condition "' + cas['Condition'] + '".');
         return undefined;
+    }
+}
+
+function toggleCollapse() {
+    viewConfig.collapsed = !viewConfig.collapsed;
+
+    let aside = document.getElementsByTagName('aside')[0];
+    if (viewConfig.collapsed) {
+        aside.classList.remove('uncollapsed');
+        aside.classList.add('collapsed');
+        document.getElementById('collapse-button').textContent = '›';
+    } else {
+        aside.classList.remove('collapsed');
+        aside.classList.add('uncollapsed');
+        document.getElementById('collapse-button').textContent = '‹';
     }
 }
 
