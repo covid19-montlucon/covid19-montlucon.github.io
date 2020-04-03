@@ -17,7 +17,6 @@ legend.onAdd = function (map) {
     let div = L.DomUtil.create('div', 'info legend');
 
     div.innerHTML = genLegendHTML(false);
-    div.percent = false;
     div.onclick = function () {
         viewConfig.percent = !viewConfig.percent;
         div.innerHTML = genLegendHTML(viewConfig.percent);
@@ -29,6 +28,14 @@ legend.onAdd = function (map) {
 legend.addTo(map);
 
 L.control.scale({metric: true, imperial: false}).addTo(map);
+
+let loading = L.control({position: 'topright'})
+loading.onAdd = function (map) {
+    let div = L.DomUtil.create('div', 'info');
+    div.innerHTML = '↻ chargement...';
+    return div;
+}
+loading.addTo(map);
 
 
 // Load data
@@ -65,14 +72,15 @@ function CSVParse(csv) {
 let loadBoundaries = fetch('data/boundaries.GeoJson')
     .then(ans => ans.json())
     .then(data => boundaries.addData(data))
-    .catch(err => console.log(err));
+    .catch(error);
 let loadListCases = fetch('data/listCases.csv')
     .then(ans => ans.text())
     .then(CSVParse)
     .then(data => cases = data)
-    .catch(err => console.log(err));
+    .catch(error);
 Promise.all([loadBoundaries, loadListCases])
-    .then(updateView);
+    .then(updateView)
+    .then(() => loading.remove());
 }
 function reloadListCases() {
     return fetch('data/listCases.csv')
@@ -280,5 +288,16 @@ function viewFilterDefault(cas) {
         console.warn('Unknown condition "' + cas['Condition'] + '".');
         return undefined;
     }
+}
+
+function error(err) {
+    console.error(err);
+    let error = L.control({position: 'topright'})
+    error.onAdd = function (map) {
+        let div = L.DomUtil.create('div', 'error');
+        div.innerHTML = err;
+        return div;
+    }
+    error.addTo(map);
 }
 

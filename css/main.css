@@ -7,6 +7,14 @@
     border-radius: 5px;
 }
 
+.error {
+    padding: 6px 8px;
+    background: red;
+    background: rgba(255,0,0,0.8);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    border-radius: 5px;
+}
+
 .legend {
     line-height: 18px;
     color: #555;
