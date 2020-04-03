@@ -70,10 +70,12 @@ function CSVParse(csv) {
 
 {
 let loadBoundaries = fetch('data/boundaries.GeoJson')
+    .then(function (ans) { if (!ans.ok) throw new Error('HTTP Error: ' + ans.status); return ans; })
     .then(ans => ans.json())
     .then(data => boundaries.addData(data))
     .catch(error);
 let loadListCases = fetch('data/listCases.csv')
+    .then(function (ans) { if (!ans.ok) throw new Error('HTTP Error: ' + ans.status); return ans; })
     .then(ans => ans.text())
     .then(CSVParse)
     .then(data => cases = data)
@@ -97,12 +99,13 @@ function updateView() {
     let counts = {};
     for (let cas of cases) {
         let loc = cas['Domicile'];
-        if (!(loc in counts))
+        if (!(loc in counts)) {
             counts[loc] = {'total': 0, 'suspected': 0, 'confirmed': 0, 'recovered': 0, 'dead': 0};
-        let filtered = viewConfig.filter ? viewConfig.filter(cas) : viewFilterDefault(cas);
+        }
+        let filtered = (viewConfig.filter ? viewConfig.filter(cas) : viewFilterDefault(cas));
         if (filtered) {
             counts[loc]['total'] += 1;
-            counts[loc][cas['Condition']] += 1;
+            counts[loc][filtered['Condition']] += 1;
         }
     }
     piecharts.clearLayers();
