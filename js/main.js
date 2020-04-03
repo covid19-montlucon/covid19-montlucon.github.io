@@ -1,3 +1,17 @@
+// Initialize data
+let boundaries = L.geoJson(
+    {'type': 'FeatureCollection', 'features': []},
+    {style: boundaryStyle, onEachFeature: boundaryInit}
+);
+let piecharts = L.featureGroup();
+let cases = [];
+let viewConfig = {
+    filter: undefined,
+    percent: false,
+    criteria: 'suspected'
+};
+
+
 // Load the map
 let map = L.map('mapid').setView([46.3428, 2.6077], 11);
 let CartoDB_PositronNoLabels = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
@@ -11,23 +25,8 @@ let OpenMapSurfer_AdminBounds = L.tileLayer('https://maps.heigit.org/openmapsurf
 });
 CartoDB_PositronNoLabels.addTo(map);
 OpenMapSurfer_AdminBounds.addTo(map);
-
-let legend = L.control({position: 'bottomright'});
-legend.onAdd = function (map) {
-    let div = L.DomUtil.create('div', 'info legend');
-
-    div.innerHTML = genLegendHTML(false);
-    div.onclick = function () {
-        viewConfig.percent = !viewConfig.percent;
-        div.innerHTML = genLegendHTML(viewConfig.percent);
-        updateView();
-    }
-
-    return div;
-};
-legend.addTo(map);
-
-L.control.scale({metric: true, imperial: false}).addTo(map);
+boundaries.addTo(map);
+piecharts.addTo(map);
 
 let loading = L.control({position: 'topright'})
 loading.onAdd = function (map) {
@@ -37,20 +36,29 @@ loading.onAdd = function (map) {
 }
 loading.addTo(map);
 
+let legend = L.control({position: 'bottomright'});
+legend.onAdd = function (map) {
+    let div = L.DomUtil.create('div', 'info legend');
+
+    div.innerHTML = genLegendHTML();
+    div.onclick = function () {
+        viewConfig.percent = !viewConfig.percent;
+        updateView();
+    }
+
+    return div;
+};
+legend.addTo(map);
+
+L.control.scale({metric: true, imperial: false}).addTo(map);
+
+let viewSelect = L.control({position: 'topright'});
+viewSelect.onAdd = genViewSelect;
+viewSelect.addTo(map);
+
+
 
 // Load data
-let boundaries = L.geoJson(
-    {'type': 'FeatureCollection', 'features': []},
-    {style: boundaryStyle, onEachFeature: boundaryInit}
-).addTo(map);
-let piecharts = L.featureGroup().addTo(map);
-let cases = [];
-let viewConfig = {
-    filter: undefined,
-    percent: false,
-    criteria: 'suspected'
-};
-
 function CSVParse(csv) {
     let lines = csv.split(/\r\n|\n/);
     for (let i = 0; i < lines.length; ++i) {
@@ -124,6 +132,8 @@ function updateView() {
         console.warn('Location "' + loc + '" not found.');
     }
     boundaries.resetStyle();
+
+    legend.getContainer().innerHTML = genLegendHTML(viewConfig.percent);
 }
 
 function boundaryInit(feature, layer) {
@@ -187,10 +197,10 @@ function boundaryStyle(feature, highlight = false) {
     return style;
 }
 
-function genLegendHTML(percent) {
+function genLegendHTML() {
     let html  = '<h3>Cas suspectés</h3>';
     html += '<i class="grad"></i><br/>';
-    if (percent) {
+    if (viewConfig.percent) {
         html += '<b id="start">0%</b>';
         html += '<b>25%</b>';
         html += '<b>50%</b>';
@@ -205,6 +215,56 @@ function genLegendHTML(percent) {
     }
     return html;
 }
+
+function genViewSelect() {
+    let div = L.DomUtil.create('div', 'info');
+
+    let radio0, radio1;
+    let percent = document.createElement('form');
+    {
+        let label0 = document.createElement('label');
+        {
+            radio0 = document.createElement('input');
+            radio0.id = 'percent-count';
+            radio0.name = 'percent';
+            radio0.type = 'radio';
+            radio0.value = 'count';
+            radio0.checked = true;
+            let txt0 = document.createElement('div');
+            txt0.appendChild(document.createTextNode('nombre de cas'));
+            label0.appendChild(radio0);
+            label0.appendChild(txt0);
+        }
+
+        let label1 = document.createElement('label');
+        {
+            radio1 = document.createElement('input');
+            radio1.name = 'percent';
+            radio1.type = 'radio';
+            radio1.value = 'percent';
+            let txt1 = document.createElement('div');
+            txt1.appendChild(document.createTextNode('% population'));
+            label1.appendChild(radio1);
+            label1.appendChild(txt1);
+        }
+
+        percent.appendChild(label0);
+        percent.appendChild(label1);
+    }
+
+    div.appendChild(percent);
+
+    radio0.addEventListener('change', function() {
+        viewConfig.percent = false;
+        updateView();
+    } );
+    radio1.addEventListener('change', function() {
+        viewConfig.percent = true;
+        updateView();
+    } );
+
+    return div;
+};
 
 function genPopup(feature, cases = {}) {
     let population = feature.properties.population || 0;

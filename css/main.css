@@ -53,3 +53,30 @@
     transform: translate(-30px, -20px);
 }
 
+form {
+    text-align: center;
+    width: 100px;
+    border-radius: 5px;
+    background-color: #aaaaaa30;
+}
+
+form label {
+    cursor: pointer;
+}
+
+form label input {
+    position: absolute;
+    opacity: 0.2;
+    width: 0px;
+    height: 0px;
+}
+
+form label input:checked ~ div {
+    background-color: lightblue;
+    width: 100%;
+    height: 50%;
+    top: 0;
+    right: 0;
+    border-radius: 5px;
+}
+
