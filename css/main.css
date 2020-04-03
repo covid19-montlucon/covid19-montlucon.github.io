@@ -38,7 +38,10 @@
 }
 
 .thumbnail {
-    width: 18px;
-    height: 18px;
+    width: 32px;
+    height: 32px;
+    float: right;
+    position: absolute;
+    transform: translate(-30px, -20px);
 }
 
