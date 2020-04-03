@@ -113,6 +113,7 @@ setInterval(reloadListCases, 1800000); // Reload every 30 minutes
 function updateView() {
     let counts = {};
     let chartPieData = {'possible': 0, 'probable': 0, 'certain': 0, 'gueri': 0, 'mort': 0};
+    let chartDateData = {};
     let chartAgeData = {
         'total': [0,0,0,0,0,0,0,0,0,0],
         'possible': [0,0,0,0,0,0,0,0,0,0],
@@ -140,6 +141,12 @@ function updateView() {
             counts[loc][filtered['Condition']] += 1;
 
             chartPieData[filtered['Condition']] += 1;
+
+            if (!(filtered['Date symptomes'] in chartDateData)) {
+                chartDateData[filtered['Date symptomes']] = 1;
+            } else {
+                chartDateData[filtered['Date symptomes']] += 1;
+            }
 
             chartAgeData['total'][Math.floor(filtered['Age']/10)] += 1;
             chartAgeData[filtered['Condition']][Math.floor(filtered['Age']/10)] += 1;
@@ -182,6 +189,32 @@ function updateView() {
                 legend: {display: false},
                 title: {display: true, text: 'Proportion globales'},
                 animation: {animateRotate: false, animateScale: true}
+            }
+        });
+    }
+    {
+        let ctx = document.getElementById('chart-date');
+        let y = [];
+        let x = Object.keys(chartDateData);
+        x.sort();
+        if (x[0] === '#N/A') {
+            x.shift();
+        }
+        for (let key of x) {
+            y.push(chartDateData[key]);
+        }
+        let chartDate = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: x,
+                datasets: [
+                    {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.total, label: 'Date de premiers symptomes', data: y}
+                ]
+            },
+            options: {
+                legend: {display: false},
+                title: {display: true, text: 'Apparition de symptome'},
+                scales: {yAxes: [{ stacked: true }]}
             }
         });
     }
