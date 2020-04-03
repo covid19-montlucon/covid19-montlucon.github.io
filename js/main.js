@@ -121,6 +121,14 @@ function updateView() {
         'gueri': [0,0,0,0,0,0,0,0,0,0],
         'mort': [0,0,0,0,0,0,0,0,0,0]
     };
+    let chartSexData = {
+        'total': {'F': 0, 'M': 0},
+        'possible': {'F': 0, 'M': 0},
+        'probable': {'F': 0, 'M': 0},
+        'certain': {'F': 0, 'M': 0},
+        'gueri': {'F': 0, 'M': 0},
+        'mort': {'F': 0, 'M': 0}
+    };
     for (let cas of cases) {
         let loc = cas['Domicile'];
         if (!(loc in counts)) {
@@ -132,8 +140,12 @@ function updateView() {
             counts[loc][filtered['Condition']] += 1;
 
             chartPieData[filtered['Condition']] += 1;
+
             chartAgeData['total'][Math.floor(filtered['Age']/10)] += 1;
             chartAgeData[filtered['Condition']][Math.floor(filtered['Age']/10)] += 1;
+
+            chartSexData['total'][filtered['Sexe']] += 1;
+            chartSexData[filtered['Condition']][filtered['Sexe']] += 1;
         }
     }
     piecharts.clearLayers();
@@ -168,7 +180,8 @@ function updateView() {
             },
             options: {
                 legend: {display: false},
-                title: {display: true, text: 'Proportion globales'}
+                title: {display: true, text: 'Proportion globales'},
+                animation: {animateRotate: false, animateScale: true}
             }
         });
     }
@@ -190,6 +203,49 @@ function updateView() {
                 legend: {display: false},
                 title: {display: true, text: 'Age (aires empillées)'},
                 scales: {yAxes: [{ stacked: true }]}
+            }
+        });
+    }
+    {
+        let ctx = document.getElementById('chart-sex');
+        let chartPie = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['F', 'M'],
+                datasets: [
+                    {
+                        backgroundColor: [viewConfig.colors.total, viewConfig.colors.total],
+                        data: [chartSexData.total['F'], chartSexData.total['M']]
+                    },
+                    {
+                        backgroundColor: [viewConfig.colors.gueri, viewConfig.colors.gueri],
+                        data: [chartSexData.gueri['F'], chartSexData.gueri['M']]
+                    },
+                    {
+                        backgroundColor: [viewConfig.colors.mort, viewConfig.colors.mort],
+                        data: [chartSexData.mort['F'], chartSexData.mort['M']]
+                    },
+                    {
+                        backgroundColor: [viewConfig.colors.certain, viewConfig.colors.certain],
+                        data: [chartSexData.certain['F'], chartSexData.certain['M']]
+                    },
+                    {
+                        backgroundColor: [viewConfig.colors.probable, viewConfig.colors.probable],
+                        data: [chartSexData.probable['F'], chartSexData.probable['M']]
+                    },
+                    {
+                        backgroundColor: [viewConfig.colors.possible, viewConfig.colors.possible],
+                        data: [chartSexData.possible['F'], chartSexData.possible['M']]
+                    },
+                ]
+            },
+            options: {
+                cutoutPercentage: 20,
+                rotation: 0,
+                circumference: Math.PI,
+                legend: {display: false},
+                title: {display: true, text: 'Sexe'},
+                animation: {animateRotate: false, animateScale: true}
             }
         });
     }
