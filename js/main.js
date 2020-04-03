@@ -41,10 +41,6 @@ legend.onAdd = function (map) {
     let div = L.DomUtil.create('div', 'info legend');
 
     div.innerHTML = genLegendHTML();
-    div.onclick = function () {
-        viewConfig.percent = !viewConfig.percent;
-        updateView();
-    }
 
     return div;
 };
@@ -198,7 +194,7 @@ function boundaryStyle(feature, highlight = false) {
 }
 
 function genLegendHTML() {
-    let html  = '<h3>Cas suspectés</h3>';
+    let html = '';// = '<h3>Cas suspectés</h3>';
     html += '<i class="grad"></i><br/>';
     if (viewConfig.percent) {
         html += '<b id="start">0%</b>';
