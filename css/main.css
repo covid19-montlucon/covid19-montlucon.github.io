@@ -42,7 +42,8 @@ aside > #collapse-button {
   top: 20px;
   left: 100%;
   width: 24px;
-  padding-block: 25px;
+  padding-top: 25px;
+  padding-bottom: 25px;
   background-color: white;
   opacity: 0.95;
   box-shadow: 5px 5px 5px #0002;
@@ -66,6 +67,10 @@ aside > #collapse-button {
     flex-direction: column;
 }
 
+#aside > canvas {
+    padding-bottom: 40px;
+}
+
 .filler {
     flex-grow: 1;
 }
@@ -73,13 +78,14 @@ aside > #collapse-button {
 .legend {
     line-height: 14px;
     color: #555;
-    padding-inline: 12px;
+    padding-left: 12px;
+    padding-right: 12px;
     padding-top: 5px;
 }
 .legend h3 {
     line-height: 0px;
     text-align: center;
-    margin-block-end: 8px;
+    margin-bottom: 8px;
 }
 .legend .grad {
     width: 100%;
@@ -88,15 +94,16 @@ aside > #collapse-button {
     background: linear-gradient(to right, transparent, red);
 }
 .legend b {
-    padding-inline: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
     float: left;
     width: 0px;
 }
 .legend b#start {
-    padding-inline-start: 0px;
+    padding-left: 0px;
 }
 .legend b#end {
-    padding-inline-end: 0px;
+    padding-right: 0px;
     float: none;
 }
 
