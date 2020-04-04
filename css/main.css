@@ -116,29 +116,71 @@ aside > #collapse-button {
 }
 
 form {
-    text-align: center;
-    width: 100px;
+    text-align: right;
+    width: 110px;
     border-radius: 5px;
-    background-color: #aaaaaa30;
+    margin-left: 12px;
+    margin-right: 12px;
+    margin-top: 4px;
+    margin-bottom: 4px;
 }
 
 form label {
     cursor: pointer;
 }
 
-form label input {
+form input {
     position: absolute;
-    opacity: 0.2;
+    opacity: 0;
     width: 0px;
     height: 0px;
 }
 
-form label input:checked ~ div {
-    background-color: lightblue;
-    width: 100%;
-    height: 50%;
-    top: 0;
-    right: 0;
+form > span {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    width: 18px;
+    height: 28px;
     border-radius: 5px;
+    background-color: #aaaaaa30;
+}
+
+form label > div {
+    padding-right: 24px;
+}
+
+form label input ~ span {
+    position: absolute;
+    right: 12px;
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    background-color: lightblue;
+    transition: ease;
+    transition-duration: 400ms;
+    visibility: visible;
+}
+
+form label input[value=count] ~ span {
+    top: 22px;
+}
+
+form label input[value=percent] ~ span {
+    top: 4px;
+}
+
+form label input:checked ~ span {
+    transition: ease;
+    transition-duration: 400ms;
+    visibility: hidden;
+}
+
+form label input[value=count]:checked ~ span {
+    top: 4px;
+}
+
+form label input[value=percent]:checked ~ span {
+    top: 22px;
 }
 

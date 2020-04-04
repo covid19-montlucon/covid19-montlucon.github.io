@@ -57,7 +57,7 @@ legend.addTo(map);
 
 L.control.scale({metric: true, imperial: false, position: 'bottomleft'}).addTo(map);
 
-let viewSelect = L.control({position: 'topright'});
+let viewSelect = L.control({position: 'bottomright'});
 viewSelect.onAdd = genViewSelect;
 viewSelect.addTo(map);
 
@@ -408,6 +408,7 @@ function genViewSelect() {
             txt0.appendChild(document.createTextNode('nombre de cas'));
             label0.appendChild(radio0);
             label0.appendChild(txt0);
+            label0.appendChild(document.createElement('span'));
         }
 
         let label1 = document.createElement('label');
@@ -420,8 +421,10 @@ function genViewSelect() {
             txt1.appendChild(document.createTextNode('% population'));
             label1.appendChild(radio1);
             label1.appendChild(txt1);
+            label1.appendChild(document.createElement('span'));
         }
 
+        percent.appendChild(document.createElement('span'));
         percent.appendChild(label0);
         percent.appendChild(label1);
     }
