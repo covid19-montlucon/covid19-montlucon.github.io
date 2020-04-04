@@ -186,9 +186,22 @@ function updateView() {
                 }]
             },
             options: {
-                legend: {display: false},
                 title: {display: true, text: 'Proportion globales'},
-                animation: {animateRotate: false, animateScale: true}
+                animation: {animateRotate: false, animateScale: true},
+                legend: {
+                    display: true, 
+                    position: 'right',
+                    labels: {generateLabels: function(chart) {
+                        return [
+                            {text: 'Possible', fillStyle: viewConfig.colors.possible},
+                            {text: 'Probable', fillStyle: viewConfig.colors.probable},
+                            {text: 'Certain', fillStyle: viewConfig.colors.certain},
+                            {text: 'Guéri', fillStyle: viewConfig.colors.gueri},
+                            {text: 'Mort', fillStyle: viewConfig.colors.mort},
+                            {text: 'Total', fillStyle: '#000000'}
+                        ];
+			        }}
+			    }
             }
         });
     }
@@ -223,7 +236,7 @@ function updateView() {
         let chartAge = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: [0,10,20,30,40,50,60,70,80,90,100],
+                labels: ['0-10','10-20','20-30','30-40','40-50','50-60','60-70','70-80','80-90','90-100'],
                 datasets: [
                     {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.mort, label: 'Morts', data: chartAgeData['mort']},
                     {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.gueri, label: 'Guéris', data: chartAgeData['gueri']},
@@ -244,7 +257,7 @@ function updateView() {
         let chartPie = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['F', 'M'],
+                labels: ['Femme', 'Homme'],
                 datasets: [
                     {
                         backgroundColor: [viewConfig.colors.total, viewConfig.colors.total],
@@ -276,7 +289,7 @@ function updateView() {
                 cutoutPercentage: 20,
                 rotation: 0,
                 circumference: Math.PI,
-                legend: {display: false},
+                legend: {display: true, labels: {boxWidth: 0, generateLabels: (() => [{text: 'Homme    Femme'}])}},
                 title: {display: true, text: 'Sexe'},
                 animation: {animateRotate: false, animateScale: true}
             }
