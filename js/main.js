@@ -110,7 +110,7 @@ function reloadListCases() {
 setInterval(reloadListCases, 1800000); // Reload every 30 minutes
 
 
-function updateView() {
+function updateView(sidePanel = true) {
     let counts = {};
     let chartPieData = {'possible': 0, 'probable': 0, 'certain': 0, 'gueri': 0, 'mort': 0};
     let chartDateData = {};
@@ -155,6 +155,16 @@ function updateView() {
             chartSexData[filtered['Condition']][filtered['Sexe']] += 1;
         }
     }
+    updateViewMap(counts);
+    if (sidePanel) {
+        updateViewChartPie(chartPieData);
+        updateViewChartDate(chartDateData);
+        updateViewChartAge(chartAgeData);
+        updateViewChartSex(chartSexData);
+    }
+}
+
+function updateViewMap(counts) {
     piecharts.clearLayers();
     for (let feature of boundaries.toGeoJSON().features) {
         let loc = feature.properties.name;
@@ -173,128 +183,131 @@ function updateView() {
     boundaries.resetStyle();
 
     legend.getContainer().innerHTML = genLegendHTML(viewConfig.percent);
+}
 
-    {
-        let ctx = document.getElementById('chart-pie');
-        let chartPie = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Possible', 'Probable', 'Certain', 'Guéris', 'Morts'],
-                datasets: [{
-                    backgroundColor: [viewConfig.colors.possible, viewConfig.colors.probable, viewConfig.colors.certain, viewConfig.colors.gueri, viewConfig.colors.mort],
-                    data: [chartPieData.possible, chartPieData.probable, chartPieData.certain, chartPieData.gueri, chartPieData.mort]
-                }]
-            },
-            options: {
-                title: {display: true, text: 'Proportion globales'},
-                animation: {animateRotate: false, animateScale: true},
-                legend: {
-                    display: true, 
-                    position: 'right',
-                    labels: {generateLabels: function(chart) {
-                        return [
-                            {text: 'Possible', fillStyle: viewConfig.colors.possible},
-                            {text: 'Probable', fillStyle: viewConfig.colors.probable},
-                            {text: 'Certain', fillStyle: viewConfig.colors.certain},
-                            {text: 'Guéri', fillStyle: viewConfig.colors.gueri},
-                            {text: 'Mort', fillStyle: viewConfig.colors.mort},
-                            {text: 'Total', fillStyle: '#000000'}
-                        ];
-			        }}
-			    }
-            }
-        });
-    }
-    {
-        let ctx = document.getElementById('chart-date');
-        let y = [];
-        let x = Object.keys(chartDateData);
-        x.sort();
-        if (x[0] === '#N/A') {
-            x.shift();
+function updateViewChartPie(chartPieData) {
+    let ctx = document.getElementById('chart-pie');
+    let chartPie = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Possible', 'Probable', 'Certain', 'Guéris', 'Morts'],
+            datasets: [{
+                backgroundColor: [viewConfig.colors.possible, viewConfig.colors.probable, viewConfig.colors.certain, viewConfig.colors.gueri, viewConfig.colors.mort],
+                data: [chartPieData.possible, chartPieData.probable, chartPieData.certain, chartPieData.gueri, chartPieData.mort]
+            }]
+        },
+        options: {
+            title: {display: true, text: 'Proportion globales'},
+            animation: {animateRotate: false, animateScale: true},
+            legend: {
+                display: true, 
+                position: 'right',
+                labels: {generateLabels: function(chart) {
+                    return [
+                        {text: 'Possible', fillStyle: viewConfig.colors.possible},
+                        {text: 'Probable', fillStyle: viewConfig.colors.probable},
+                        {text: 'Certain', fillStyle: viewConfig.colors.certain},
+                        {text: 'Guéri', fillStyle: viewConfig.colors.gueri},
+                        {text: 'Mort', fillStyle: viewConfig.colors.mort},
+                        {text: 'Total', fillStyle: '#000000'}
+                    ];
+			    }}
+			}
         }
-        for (let key of x) {
-            y.push(chartDateData[key]);
+    });
+}
+
+function updateViewChartDate(chartDateData) {
+    let ctx = document.getElementById('chart-date');
+    let y = [];
+    let x = Object.keys(chartDateData);
+    x.sort();
+    if (x[0] === '#N/A') {
+        x.shift();
+    }
+    for (let key of x) {
+        y.push(chartDateData[key]);
+    }
+    let chartDate = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: x,
+            datasets: [
+                {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.total, label: 'Date de premiers symptomes', data: y}
+            ]
+        },
+        options: {
+            legend: {display: false},
+            title: {display: true, text: 'Apparition de symptome'},
+            scales: {yAxes: [{ stacked: true }]}
         }
-        let chartDate = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: x,
-                datasets: [
-                    {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.total, label: 'Date de premiers symptomes', data: y}
-                ]
-            },
-            options: {
-                legend: {display: false},
-                title: {display: true, text: 'Apparition de symptome'},
-                scales: {yAxes: [{ stacked: true }]}
-            }
-        });
-    }
-    {
-        let ctx = document.getElementById('chart-age');
-        let chartAge = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['0-10','10-20','20-30','30-40','40-50','50-60','60-70','70-80','80-90','90-100'],
-                datasets: [
-                    {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.mort, label: 'Morts', data: chartAgeData['mort']},
-                    {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.gueri, label: 'Guéris', data: chartAgeData['gueri']},
-                    {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.certain, label: 'Certain', data: chartAgeData['certain']},
-                    {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.probable, label: 'Probable', data: chartAgeData['probable']},
-                    {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.possible, label: 'Possible', data: chartAgeData['possible']},
-                ]
-            },
-            options: {
-                legend: {display: false},
-                title: {display: true, text: 'Age (aires empillées)'},
-                scales: {yAxes: [{ stacked: true }]}
-            }
-        });
-    }
-    {
-        let ctx = document.getElementById('chart-sex');
-        let chartPie = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Femme', 'Homme'],
-                datasets: [
-                    {
-                        backgroundColor: [viewConfig.colors.total, viewConfig.colors.total],
-                        data: [chartSexData.total['F'], chartSexData.total['M']]
-                    },
-                    {
-                        backgroundColor: [viewConfig.colors.gueri, viewConfig.colors.gueri],
-                        data: [chartSexData.gueri['F'], chartSexData.gueri['M']]
-                    },
-                    {
-                        backgroundColor: [viewConfig.colors.mort, viewConfig.colors.mort],
-                        data: [chartSexData.mort['F'], chartSexData.mort['M']]
-                    },
-                    {
-                        backgroundColor: [viewConfig.colors.certain, viewConfig.colors.certain],
-                        data: [chartSexData.certain['F'], chartSexData.certain['M']]
-                    },
-                    {
-                        backgroundColor: [viewConfig.colors.probable, viewConfig.colors.probable],
-                        data: [chartSexData.probable['F'], chartSexData.probable['M']]
-                    },
-                    {
-                        backgroundColor: [viewConfig.colors.possible, viewConfig.colors.possible],
-                        data: [chartSexData.possible['F'], chartSexData.possible['M']]
-                    },
-                ]
-            },
-            options: {
-                cutoutPercentage: 20,
-                rotation: 0,
-                circumference: Math.PI,
-                legend: {display: true, labels: {boxWidth: 0, generateLabels: (() => [{text: 'Homme    Femme'}])}},
-                title: {display: true, text: 'Sexe'},
-                animation: {animateRotate: false, animateScale: true}
-            }
-        });
-    }
+    });
+}
+
+function updateViewChartAge(chartAgeData) {
+    let ctx = document.getElementById('chart-age');
+    let chartAge = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['0-10','10-20','20-30','30-40','40-50','50-60','60-70','70-80','80-90','90-100'],
+            datasets: [
+                {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.mort, label: 'Morts', data: chartAgeData['mort']},
+                {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.gueri, label: 'Guéris', data: chartAgeData['gueri']},
+                {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.certain, label: 'Certain', data: chartAgeData['certain']},
+                {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.probable, label: 'Probable', data: chartAgeData['probable']},
+                {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.possible, label: 'Possible', data: chartAgeData['possible']},
+            ]
+        },
+        options: {
+            legend: {display: false},
+            title: {display: true, text: 'Age (aires empillées)'},
+            scales: {yAxes: [{ stacked: true }]}
+        }
+    });
+}
+
+function updateViewChartSex(chartSexData) {
+    let ctx = document.getElementById('chart-sex');
+    let chartPie = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Femme', 'Homme'],
+            datasets: [
+                {
+                    backgroundColor: [viewConfig.colors.total, viewConfig.colors.total],
+                    data: [chartSexData.total['F'], chartSexData.total['M']]
+                },
+                {
+                    backgroundColor: [viewConfig.colors.gueri, viewConfig.colors.gueri],
+                    data: [chartSexData.gueri['F'], chartSexData.gueri['M']]
+                },
+                {
+                    backgroundColor: [viewConfig.colors.mort, viewConfig.colors.mort],
+                    data: [chartSexData.mort['F'], chartSexData.mort['M']]
+                },
+                {
+                    backgroundColor: [viewConfig.colors.certain, viewConfig.colors.certain],
+                    data: [chartSexData.certain['F'], chartSexData.certain['M']]
+                },
+                {
+                    backgroundColor: [viewConfig.colors.probable, viewConfig.colors.probable],
+                    data: [chartSexData.probable['F'], chartSexData.probable['M']]
+                },
+                {
+                    backgroundColor: [viewConfig.colors.possible, viewConfig.colors.possible],
+                    data: [chartSexData.possible['F'], chartSexData.possible['M']]
+                },
+            ]
+        },
+        options: {
+            cutoutPercentage: 20,
+            rotation: 0,
+            circumference: Math.PI,
+            legend: {display: true, labels: {boxWidth: 0, generateLabels: (() => [{text: 'Homme    Femme'}])}},
+            title: {display: true, text: 'Sexe'},
+            animation: {animateRotate: false, animateScale: true}
+        }
+    });
 }
 
 function boundaryInit(feature, layer) {
@@ -417,11 +430,11 @@ function genViewSelect() {
 
     radio0.addEventListener('change', function() {
         viewConfig.percent = false;
-        updateView();
+        updateView(false);
     } );
     radio1.addEventListener('change', function() {
         viewConfig.percent = true;
-        updateView();
+        updateView(false);
     } );
 
     return div;
