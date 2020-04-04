@@ -171,8 +171,6 @@ form label input[value=percent] ~ span {
 }
 
 form label input:checked ~ span {
-    transition: ease;
-    transition-duration: 400ms;
     visibility: hidden;
 }
 
