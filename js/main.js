@@ -19,7 +19,9 @@ let viewConfig = {
         mort: '#c45850'
     }
 };
-
+if (window.screen.width < 1024) {
+    toggleCollapse();
+}
 
 // Load the map
 let map = L.map('mapid', {center: [46.3428, 2.6077], zoom: 11, zoomControl: false});
