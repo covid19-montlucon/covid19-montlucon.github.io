@@ -35,8 +35,8 @@ for feat in data['features']:
             continue
         if feat['properties']['name'] in ambigus and feat['properties']['insee'] not in ambigu_insee:
             continue
-        if feat['properties']['population'] < 400:
-            print('Warning: large population for ' + feat['properties']['name'])
+        if feat['properties']['population'] < 300:
+            print('Warning: large population for ' + feat['properties']['name'] + ' (' + str(feat['properties']['population']) + ')')
         newdata['features'].append(feat)
 
 for ms in merges:
