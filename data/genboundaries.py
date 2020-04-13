@@ -15,7 +15,7 @@ for loc in locs:
     if '/' in loc:
         merges.append(loc.split('/'))
 if any(loc in ms for ms in merges for loc in locs):
-    print('Warning: isolated location')
+    print('Warning: isolated locations: ' + str([(loc, ms) for ms in merges for loc in locs if loc in ms]))
 if any(set(m1)&set(m2) for m1 in merges for m2 in merges if m1 != m2):
     print('Warning: overlapping regions')
 
