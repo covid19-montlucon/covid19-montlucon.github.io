@@ -1,6 +1,6 @@
 // Initialize data
 let piecharts = L.featureGroup();
-let adminBoundsCases = {};
+let adminBoundsData = {};
 let cases = [];
 let viewConfig = {
     filter: undefined,
@@ -56,9 +56,7 @@ loading.addTo(map);
 let legend = L.control({position: 'bottomright'});
 legend.onAdd = function (map) {
     let div = L.DomUtil.create('div', 'info legend');
-
     div.innerHTML = genLegendHTML();
-
     return div;
 };
 legend.addTo(map);
@@ -91,25 +89,18 @@ function CSVParse(csv) {
     return json;
 }
 
-{
-let loadListCases = fetch('data/listCases.csv')
-    .then(function (ans) { if (!ans.ok) throw new Error('HTTP Error: ' + ans.status); return ans; })
-    .then(ans => ans.text())
-    .then(CSVParse)
-    .then(data => cases = data)
-    .catch(error)
-    .then(updateView)
-    .then(() => loading.remove());
-}
-function reloadListCases() {
+function loadListCases() {
     return fetch('data/listCases.csv')
+        .then(function(ans){if(!ans.ok){throw new Error('HTTP Error: '+ans.status);}return ans;})
         .then(ans => ans.text())
         .then(CSVParse)
         .then(data => cases = data)
-        .catch(err => console.log(err))
-        .then(updateView);
+        .catch(error)
+        .then(updateView)
+        .then(() => loading.remove());
 }
-setInterval(reloadListCases, 1800000); // Reload every 30 minutes
+loadListCases();
+setInterval(loadListCases, 1800000); // Reload every 30 minutes
 
 
 function updateView(sidePanel = true) {
@@ -157,7 +148,7 @@ function updateView(sidePanel = true) {
             chartSexData[filtered['Condition']][filtered['Sexe']] += 1;
         }
     }
-    adminBoundsCases = counts;
+    adminBoundsData = counts;
     updateViewMap(counts);
     if (sidePanel) {
         updateViewChartPie(chartPieData);
@@ -345,7 +336,7 @@ function boundaryStyle(feature, highlight = false) {
         'mort': 0,
         'total': 0
     };
-    Object.assign(counts, adminBoundsCases[feature.properties.name]);
+    Object.assign(counts, adminBoundsData[feature.properties.name]);
     let count = counts.certain + counts.probable + counts.possible;
     if (!count) {
         count = 0;
@@ -465,7 +456,7 @@ function genPopup(feature) {
         'mort': 0,
         'total': 0
     };
-    Object.assign(counts, adminBoundsCases[feature.properties.name]);
+    Object.assign(counts, adminBoundsData[feature.properties.name]);
     let population = feature.properties.population || 0;
     let possible = counts.possible || 0;
     let probable = counts.probable || 0;

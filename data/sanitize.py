@@ -19,6 +19,7 @@ for filename in sys.argv[1:-1]:
         new_feature["properties"] = {
                 "name": properties["name"],
                 "insee": properties["alltags"].get("ref:INSEE", None),
+                "population": properties["alltags"].get("population", ""),
                 "osm": properties["id"],
                 "wikidata": properties["wikidata"],
                 "wikipedia": properties["wikipedia"],
