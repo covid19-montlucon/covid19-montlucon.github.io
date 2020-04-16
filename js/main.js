@@ -1,9 +1,6 @@
 // Initialize data
-let boundaries = L.geoJson(
-    {'type': 'FeatureCollection', 'features': []},
-    {style: boundaryStyle, onEachFeature: boundaryInit}
-);
 let piecharts = L.featureGroup();
+let adminBoundsCases = {};
 let cases = [];
 let viewConfig = {
     filter: undefined,
@@ -46,7 +43,6 @@ let AdminBounds = L.boundariesLayer('data/{z}/{x}/{y}.GeoJson', {
 CartoDB_PositronNoLabels.addTo(map);
 OpenMapSurfer_AdminBounds.addTo(map);
 AdminBounds.addTo(map);
-//boundaries.addTo(map);
 piecharts.addTo(map);
 
 let loading = L.control({position: 'topright'})
@@ -96,18 +92,12 @@ function CSVParse(csv) {
 }
 
 {
-let loadBoundaries = fetch('data/boundaries.GeoJson')
-    .then(function (ans) { if (!ans.ok) throw new Error('HTTP Error: ' + ans.status); return ans; })
-    .then(ans => ans.json())
-    .then(data => boundaries.addData(data))
-    .catch(error);
 let loadListCases = fetch('data/listCases.csv')
     .then(function (ans) { if (!ans.ok) throw new Error('HTTP Error: ' + ans.status); return ans; })
     .then(ans => ans.text())
     .then(CSVParse)
     .then(data => cases = data)
-    .catch(error);
-Promise.all([loadBoundaries, loadListCases])
+    .catch(error)
     .then(updateView)
     .then(() => loading.remove());
 }
@@ -167,6 +157,7 @@ function updateView(sidePanel = true) {
             chartSexData[filtered['Condition']][filtered['Sexe']] += 1;
         }
     }
+    adminBoundsCases = counts;
     updateViewMap(counts);
     if (sidePanel) {
         updateViewChartPie(chartPieData);
@@ -178,23 +169,18 @@ function updateView(sidePanel = true) {
 
 function updateViewMap(counts) {
     piecharts.clearLayers();
+    AdminBounds.resetStyle();
     for (let layer of AdminBounds.getLayers()) {
     for (let feature of layer.toGeoJSON().features) {
         let loc = feature.properties.name;
         if (counts[loc]) {
-            feature.properties.countCases = counts[loc].certain + counts[loc].possible;
-            feature.properties.popup = genPopup(feature, counts[loc]);
+            feature.properties.popup = genPopup(feature);
             piecharts.addLayer(genPiechart(feature, counts[loc]));
-            delete counts[loc];
         } else {
             feature.properties.popup = genPopup(feature);
         }
     }
     }
-    for (let loc in counts) {
-        console.warn('Location "' + loc + '" not found.');
-    }
-    AdminBounds.resetStyle();
 
     legend.getContainer().innerHTML = genLegendHTML(viewConfig.percent);
 }
@@ -351,11 +337,18 @@ function boundaryInit(feature, layer) {
 function boundaryStyle(feature, highlight = false) {
     if (!feature) { return; }
     let style;
-    let count = 0;
-    if (feature.properties.hasOwnProperty('countCases')) {
-        if (feature.properties.countCases > 0) {
-            count = feature.properties.countCases;
-        }
+    let counts = {
+        'certain': 0,
+        'probable': 0,
+        'possible': 0,
+        'gueri': 0,
+        'mort': 0,
+        'total': 0
+    };
+    Object.assign(counts, adminBoundsCases[feature.properties.name]);
+    let count = counts.certain + counts.probable + counts.possible;
+    if (!count) {
+        count = 0;
     }
     if (highlight) {
         style = {
@@ -463,14 +456,23 @@ function genViewSelect() {
     return div;
 };
 
-function genPopup(feature, cases = {}) {
+function genPopup(feature) {
+    let counts = {
+        'certain': 0,
+        'probable': 0,
+        'possible': 0,
+        'gueri': 0,
+        'mort': 0,
+        'total': 0
+    };
+    Object.assign(counts, adminBoundsCases[feature.properties.name]);
     let population = feature.properties.population || 0;
-    let total = cases.total || 0;
-    let possible = cases.possible || 0;
-    let probable = cases.probable || 0;
-    let certain = cases.certain || 0;
-    let gueri = cases.gueri || 0;
-    let mort = cases.mort || 0;
+    let possible = counts.possible || 0;
+    let probable = counts.probable || 0;
+    let certain = counts.certain || 0;
+    let gueri = counts.gueri || 0;
+    let mort = counts.mort || 0;
+    let total = counts.total || 0;
 
     let elbase = document.createElement('div');
     {

@@ -40,7 +40,13 @@ for filename in sys.argv[1:-1]:
             continue
         wikidata = properties["wikidata"]
         wikidata_query = "https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&languages=fr&props=claims&ids=" + str(wikidata)
-        ans = requests.get(wikidata_query).json()
+        while True:
+            try:
+                ans = requests.get(wikidata_query, timeout=30).json()
+            except requests.Timeout as e:
+                pass
+            else:
+                break
         assert ans['success']
         claims = ans['entities'][wikidata]['claims']
         try:
