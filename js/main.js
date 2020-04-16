@@ -34,9 +34,19 @@ let OpenMapSurfer_AdminBounds = L.tileLayer('https://maps.heigit.org/openmapsurf
 	maxZoom: 18,
 	attribution: 'Imagery from <a href="http://giscience.uni-hd.de/">GIScience Research Group @ University of Heidelberg</a>'
 });
+let AdminBounds = L.boundariesLayer('data/{z}/{x}/{y}.GeoJson', {
+    errorTileUrl: 'data/null.GeoJson',
+    maxNativeZoom: 11,
+    minNativeZoom: 11,
+    minZoom: 10,
+    maxZoom: 12,
+    style: boundaryStyle,
+    onEachFeature: boundaryInit,
+});
 CartoDB_PositronNoLabels.addTo(map);
 OpenMapSurfer_AdminBounds.addTo(map);
-boundaries.addTo(map);
+AdminBounds.addTo(map);
+//boundaries.addTo(map);
 piecharts.addTo(map);
 
 let loading = L.control({position: 'topright'})
@@ -168,7 +178,8 @@ function updateView(sidePanel = true) {
 
 function updateViewMap(counts) {
     piecharts.clearLayers();
-    for (let feature of boundaries.toGeoJSON().features) {
+    for (let layer of AdminBounds.getLayers()) {
+    for (let feature of layer.toGeoJSON().features) {
         let loc = feature.properties.name;
         if (counts[loc]) {
             feature.properties.countCases = counts[loc].certain + counts[loc].possible;
@@ -179,10 +190,11 @@ function updateViewMap(counts) {
             feature.properties.popup = genPopup(feature);
         }
     }
+    }
     for (let loc in counts) {
         console.warn('Location "' + loc + '" not found.');
     }
-    boundaries.resetStyle();
+    AdminBounds.resetStyle();
 
     legend.getContainer().innerHTML = genLegendHTML(viewConfig.percent);
 }
@@ -313,6 +325,8 @@ function updateViewChartSex(chartSexData) {
 }
 
 function boundaryInit(feature, layer) {
+    if (!feature || !layer) { return; }
+    feature.properties.popup = genPopup(feature);
     layer.bindPopup((l => l.feature.properties.popup),
         {closeButton: false, autoPan: false, offset: [0,-10]});
 
@@ -335,6 +349,7 @@ function boundaryInit(feature, layer) {
 }
 
 function boundaryStyle(feature, highlight = false) {
+    if (!feature) { return; }
     let style;
     let count = 0;
     if (feature.properties.hasOwnProperty('countCases')) {
