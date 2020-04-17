@@ -1,5 +1,5 @@
 #! /usr/bin/python
-import sys, json, requests
+import sys, json, requests, time
 
 if len(sys.argv) < 3:
     print("Usage:", sys.argv[0], "<filename.GeoJson>... <out.GeoJson>")
@@ -43,9 +43,10 @@ for filename in sys.argv[1:-1]:
         wikidata_query = "https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&languages=fr&props=claims&ids=" + str(wikidata)
         while True:
             try:
-                ans = requests.get(wikidata_query, timeout=30).json()
-            except requests.Timeout as e:
-                pass
+                ans = requests.get(wikidata_query, timeout=10).json()
+            except Exception as e:
+                print(f"Failed to connect for {name} ({wikidata}), retry...", file=sys.stderr)
+                time.sleep(10)
             else:
                 break
         assert ans['success']
@@ -54,7 +55,8 @@ for filename in sys.argv[1:-1]:
             population = int(claims['P1082'][-1]['mainsnak']['datavalue']['value']['amount'])
             new_feature['properties']['population'] = population
         except KeyError as e:
-            print(f"Population not found for {name} ({wikidata})", file=sys.stderr)
+            if new_feature['properties']['population'] == "":
+                print(f"Population not found for {name} ({wikidata})", file=sys.stderr)
         try:
             gps = claims['P625'][-1]['mainsnak']['datavalue']['value']
             new_feature['properties']['coordinates'] = gps
@@ -64,7 +66,8 @@ for filename in sys.argv[1:-1]:
             postal = claims['P281'][-1]['mainsnak']['datavalue']['value']
             new_feature['properties']['postalcode'] = postal
         except KeyError as e:
-            print(f"Postal code not found for {name} ({wikidata})", file=sys.stderr)
+            #print(f"Postal code not found for {name} ({wikidata})", file=sys.stderr)
+            pass
         try:
             url_wikimedia = "https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=pageimages&titles=File:" + claims['P94'][-1]['mainsnak']['datavalue']['value']
             json_data2 = requests.get(url_wikimedia).json()
@@ -76,7 +79,8 @@ for filename in sys.argv[1:-1]:
             url = "https://lannuaire.service-public.fr/" + claims['P6671'][-1]['mainsnak']['datavalue']['value']
             new_feature['properties']['url'] = url
         except KeyError as e:
-            print(f"URL not found for {name} ({wikidata})", file=sys.stderr)
+            #print(f"URL not found for {name} ({wikidata})", file=sys.stderr)
+            pass
 
         features.append(new_feature)
 
