@@ -121,7 +121,7 @@ F,80,03185,2020-04-05,4/7/2020,#N/A,#N/A,#N/A,#N/A,#N/A,possible,possible
 F,40,03191/03285,2020-03-31,4/7/2020,#N/A,#N/A,#N/A,#N/A,#N/A,certain,certain
 F,25,03185,2020-04-02,4/7/2020,#N/A,#N/A,#N/A,#N/A,#N/A,certain,certain
 F,45,03185,2020-04-04,4/7/2020,#N/A,#N/A,#N/A,#N/A,#N/A,possible,possible
-M,40,03185,2020-04-30,4/7/2020,#N/A,#N/A,#N/A,#N/A,#N/A,possible,possible
+M,40,03185,2020-03-30,4/7/2020,#N/A,#N/A,#N/A,#N/A,#N/A,possible,possible
 F,25,03101,2020-04-03,4/7/2020,#N/A,#N/A,#N/A,#N/A,#N/A,possible,possible
 M,25,03185,2020-03-23,4/7/2020,#N/A,#N/A,#N/A,#N/A,#N/A,certain,certain
 F,35,03185,2020-04-06,4/8/2020,#N/A,#N/A,#N/A,#N/A,#N/A,probable,probable
@@ -143,7 +143,7 @@ M,10,23076,2020-04-09,4/14/2020,#N/A,#N/A,#N/A,#N/A,#N/A,probable,probable
 F,40,63281,2020-03-22,3/31/2020,#N/A,#N/A,#N/A,#N/A,Positif,certain,certain
 F,45,63377,2020-03-14,3/19/2020,#N/A,#N/A,#N/A,#N/A,Positif,certain,certain
 F,40,03185,2020-03-25,4/1/2020,#N/A,#N/A,#N/A,#N/A,Positif,certain,certain
-#N/A,30,63354,2020-04-25,4/4/2020,#N/A,#N/A,#N/A,#N/A,Positif,certain,certain
+#N/A,30,63354,2020-03-25,4/4/2020,#N/A,#N/A,#N/A,#N/A,Positif,certain,certain
 M,65,63281,#N/A,4/1/2020,#N/A,#N/A,#N/A,#N/A,Positif,certain,certain
 F,75,63281,#N/A,4/9/2020,#N/A,#N/A,#N/A,#N/A,Positif,certain,certain
 M,75,63281,#N/A,4/9/2020,#N/A,#N/A,#N/A,#N/A,Positif,certain,certain
@@ -156,6 +156,7 @@ M,15,03262,#N/A,4/8/2020,#N/A,#N/A,#N/A,#N/A,#N/A,probable,probable
 F,20,03185,#N/A,4/15/2020,#N/A,#N/A,#N/A,#N/A,#N/A,probable,probable
 F,55,03185,2020-04-05,4/15/2020,#N/A,#N/A,#N/A,#N/A,#N/A,probable,probable
 M,45,03055,#N/A,4/15/2020,#N/A,#N/A,#N/A,#N/A,#N/A,possible,possible
+F,50,03212,2020-03-20,3/27/2020,#N/A,#N/A,#N/A,#N/A,#N/A,certain,certain
 F,75,03128,2020-03-26,4/2/2020,#N/A,#N/A,#N/A,#N/A,#N/A,certain,certain
 F,65,03101,2020-03-23,3/23/2020,#N/A,#N/A,#N/A,4/9/2020,#N/A,certain,gueri
 F,55,03101,2020-03-26,3/26/2020,#N/A,#N/A,#N/A,3/30/2020,#N/A,possible,gueri
