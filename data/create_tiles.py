@@ -25,6 +25,13 @@ def avg(*l):
 with open('all_boundaries.GeoJson', 'r') as f:
     boundaries = json.load(f)
 
+# Reduce geometry resolution (take half the points)
+def reduce(mesh):
+    if len(mesh) < 400:
+        return mesh
+    return mesh[::len(mesh)//400]
+for feature in boundaries['features']:
+    feature['geometry']['coordinates'] = [[reduce(cs) for cs in ca] for ca in feature['geometry']['coordinates']]
 
 merges = [
         {"03191", "03285"},
