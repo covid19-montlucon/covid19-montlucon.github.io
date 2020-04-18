@@ -16,9 +16,52 @@ def project(lat, lng, z=11):
     y = log(tan((0.25 - lat/360)*pi))/2/pi + 0.5
     return int(x*2**z), int(y*2**z), int(z)
 
+def avg(*l):
+    s = 0
+    for n, x in enumerate(l, 1): s += x
+    return s / n
 
-with open('boundaries_all_fr.GeoJson', 'r') as f:
+
+with open('all_boundaries.GeoJson', 'r') as f:
     boundaries = json.load(f)
+
+
+merges = [
+        {"03191", "03285"},
+        {"03172", "03249", "03317"},
+        {"03167", "03261"},
+        {"03032", "03308"},
+        {"18002", "18041", "18178"},
+        ]
+merges = [dict.fromkeys(x) for x in merges]
+for feature in boundaries['features']:
+    for grp in merges:
+        if feature['properties']['insee'] in grp:
+            grp[feature['properties']['insee']] = feature
+for grp in merges:
+    for x in grp.values():
+        boundaries['features'].remove(x)
+    newfeat = {
+            'type': 'Feature',
+            'properties': {
+                'name': ', '.join(x['properties']['name'] for x in sorted(grp.values(), key=lambda x: -x['properties']['population'])),
+                'insee': '/'.join(sorted(x['properties']['insee'] for x in grp.values())),
+                'population': sum(x['properties']['population'] for x in grp.values()),
+                'coordinates': max(grp.values(), key=lambda x: x['properties']['population'])['properties']['coordinates'],
+                },
+            'bbox': [
+                min(x['bbox'][0] for x in grp.values()),
+                min(x['bbox'][1] for x in grp.values()),
+                max(x['bbox'][2] for x in grp.values()),
+                max(x['bbox'][3] for x in grp.values()),
+                ],
+            'geometry': {
+                'type': 'MultiPolygon',
+                'coordinates': [t for x in grp.values() for t in x['geometry']['coordinates']]
+                }
+            }
+    boundaries['features'].append(newfeat)
+
 
 outfile_fmt = './{z}/{x}/{y}.GeoJson'
 
