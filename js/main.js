@@ -1,15 +1,11 @@
 // Initialize data
-let boundaries = L.geoJson(
-    {'type': 'FeatureCollection', 'features': []},
-    {style: boundaryStyle, onEachFeature: boundaryInit}
-);
 let piecharts = L.featureGroup();
+let data = {};
 let cases = [];
 let viewConfig = {
+    sideCollapsed: false,
     filter: undefined,
     percent: false,
-    criteria: 'possible',
-    collapsed: false,
     colors: {
         total: '#000000',
         possible: '#bedde9',
@@ -34,25 +30,32 @@ let OpenMapSurfer_AdminBounds = L.tileLayer('https://maps.heigit.org/openmapsurf
 	maxZoom: 18,
 	attribution: 'Imagery from <a href="http://giscience.uni-hd.de/">GIScience Research Group @ University of Heidelberg</a>'
 });
+let AdminBounds = L.boundariesLayer('data/{z}/{x}/{y}.GeoJson', {
+    errorTileUrl: 'data/null.GeoJson',
+    maxNativeZoom: 11,
+    minNativeZoom: 11,
+    minZoom: 10,
+    maxZoom: 12,
+    style: boundaryStyle,
+    onEachFeature: boundaryInit,
+});
 CartoDB_PositronNoLabels.addTo(map);
 OpenMapSurfer_AdminBounds.addTo(map);
-boundaries.addTo(map);
+AdminBounds.addTo(map);
 piecharts.addTo(map);
 
-let loading = L.control({position: 'topright'})
-loading.onAdd = function (map) {
+let loadingControl = L.control({position: 'topright'})
+loadingControl.onAdd = function (map) {
     let div = L.DomUtil.create('div', 'info');
-    div.innerHTML = '↻ chargement...';
+    div.appendChild(document.createTextNode('↻ chargement...'));
     return div;
 }
-loading.addTo(map);
+loadingControl.addTo(map);
 
 let legend = L.control({position: 'bottomright'});
 legend.onAdd = function (map) {
     let div = L.DomUtil.create('div', 'info legend');
-
     div.innerHTML = genLegendHTML();
-
     return div;
 };
 legend.addTo(map);
@@ -69,6 +72,7 @@ L.control.zoom({position: 'topright'}).addTo(map);
 
 // Load data
 function CSVParse(csv) {
+    // /!\ This is a very basic parsing, do not rely on it for generic csv
     let lines = csv.split(/\r\n|\n/);
     for (let i = 0; i < lines.length; ++i) {
         lines[i] = lines[i].split(',');
@@ -85,34 +89,23 @@ function CSVParse(csv) {
     return json;
 }
 
-{
-let loadBoundaries = fetch('data/boundaries.GeoJson')
-    .then(function (ans) { if (!ans.ok) throw new Error('HTTP Error: ' + ans.status); return ans; })
-    .then(ans => ans.json())
-    .then(data => boundaries.addData(data))
-    .catch(error);
-let loadListCases = fetch('data/listCases.csv')
-    .then(function (ans) { if (!ans.ok) throw new Error('HTTP Error: ' + ans.status); return ans; })
-    .then(ans => ans.text())
-    .then(CSVParse)
-    .then(data => cases = data)
-    .catch(error);
-Promise.all([loadBoundaries, loadListCases])
-    .then(updateView)
-    .then(() => loading.remove());
-}
-function reloadListCases() {
+function loadListCases() {
     return fetch('data/listCases.csv')
+        .then(function(ans){if(!ans.ok){throw new Error('HTTP Error: '+ans.status);}return ans;})
         .then(ans => ans.text())
         .then(CSVParse)
         .then(data => cases = data)
-        .catch(err => console.log(err))
-        .then(updateView);
+        .catch(error)
+        .then(populateData)
+        .then(updateViewMap)
+        .then(updateViewSidePanel)
+        .then(() => loadingControl.remove());
 }
-setInterval(reloadListCases, 1800000); // Reload every 30 minutes
+loadListCases();
+setInterval(loadListCases, 1800000); // Reload every 30 minutes
 
 
-function updateView(sidePanel = true) {
+function populateData() {
     let counts = {};
     let chartPieData = {'possible': 0, 'probable': 0, 'certain': 0, 'gueri': 0, 'mort': 0};
     let chartDateData = {};
@@ -144,10 +137,10 @@ function updateView(sidePanel = true) {
 
             chartPieData[filtered['Condition']] += 1;
 
-            if (!(filtered['Date symptomes'] in chartDateData)) {
-                chartDateData[filtered['Date symptomes']] = 1;
-            } else {
-                chartDateData[filtered['Date symptomes']] += 1;
+            let date = new Date(filtered['Date symptomes']);
+            if (!isNaN(date)) {
+                date = date.toISOString();
+                chartDateData[date] = (chartDateData[date] || 0 ) + 1;
             }
 
             chartAgeData['total'][Math.floor(filtered['Age']/10)] += 1;
@@ -157,37 +150,51 @@ function updateView(sidePanel = true) {
             chartSexData[filtered['Condition']][filtered['Sexe']] += 1;
         }
     }
-    updateViewMap(counts);
-    if (sidePanel) {
-        updateViewChartPie(chartPieData);
-        updateViewChartDate(chartDateData);
-        updateViewChartAge(chartAgeData);
-        updateViewChartSex(chartSexData);
-    }
+    data = {
+        'map': counts,
+        'globalpie': chartPieData,
+        'date': chartDateData,
+        'age': chartAgeData,
+        'sex': chartSexData,
+    };
 }
 
-function updateViewMap(counts) {
+function updateViewMap() {
+    let counts = {};
+    Object.assign(counts, data['map']);
     piecharts.clearLayers();
-    for (let feature of boundaries.toGeoJSON().features) {
-        let loc = feature.properties.name;
-        if (counts[loc]) {
-            feature.properties.countCases = counts[loc].certain + counts[loc].possible;
-            feature.properties.popup = genPopup(feature, counts[loc]);
-            piecharts.addLayer(genPiechart(feature, counts[loc]));
-            delete counts[loc];
-        } else {
-            feature.properties.popup = genPopup(feature);
+    AdminBounds.resetStyle();
+    for (let layer of AdminBounds.getLayers()) {
+        for (let feature of layer.toGeoJSON().features) {
+            let loc = feature.properties.insee;
+            if (counts[loc]) {
+                feature.properties.popup = genPopup(feature);
+                piecharts.addLayer(genPiechart(feature, counts[loc]));
+            } else {
+                feature.properties.popup = genPopup(feature);
+            }
         }
     }
-    for (let loc in counts) {
-        console.warn('Location "' + loc + '" not found.');
-    }
-    boundaries.resetStyle();
 
     legend.getContainer().innerHTML = genLegendHTML(viewConfig.percent);
 }
 
-function updateViewChartPie(chartPieData) {
+function updateViewSidePanel() {
+    updateViewChartPie();
+    updateViewChartDate();
+    updateViewChartAge();
+    updateViewChartSex();
+}
+
+function updateViewChartPie() {
+    let counts = {
+        possible: 0,
+        probable: 0,
+        certain: 0,
+        gueri: 0,
+        mort: 0,
+    };
+    Object.assign(counts, data['globalpie']);
     let ctx = document.getElementById('chart-pie');
     let chartPie = new Chart(ctx, {
         type: 'doughnut',
@@ -195,7 +202,7 @@ function updateViewChartPie(chartPieData) {
             labels: ['Possible', 'Probable', 'Certain', 'Guéris', 'Morts'],
             datasets: [{
                 backgroundColor: [viewConfig.colors.possible, viewConfig.colors.probable, viewConfig.colors.certain, viewConfig.colors.gueri, viewConfig.colors.mort],
-                data: [chartPieData.possible, chartPieData.probable, chartPieData.certain, chartPieData.gueri, chartPieData.mort]
+                data: [counts.possible, counts.probable, counts.certain, counts.gueri, counts.mort]
             }]
         },
         options: {
@@ -211,7 +218,7 @@ function updateViewChartPie(chartPieData) {
                         {text: 'Certain', fillStyle: viewConfig.colors.certain},
                         {text: 'Guéri', fillStyle: viewConfig.colors.gueri},
                         {text: 'Mort', fillStyle: viewConfig.colors.mort},
-                        {text: 'Total', fillStyle: '#000000'}
+                        {text: 'Total', fillStyle: viewConfig.colors.total}
                     ];
 			    }}
 			}
@@ -219,16 +226,26 @@ function updateViewChartPie(chartPieData) {
     });
 }
 
-function updateViewChartDate(chartDateData) {
+function updateViewChartDate() {
+    let counts = {};
+    Object.assign(counts, data['date']);
     let ctx = document.getElementById('chart-date');
-    let y = [];
-    let x = Object.keys(chartDateData);
-    x.sort();
-    if (x[0] === '#N/A') {
-        x.shift();
+    let mindate = new Date(Date.now()), maxdate = new Date(2019, 10, 07);
+    for (const datestr in counts) {
+        const date = new Date(datestr);
+        if (date < mindate) { mindate = date; }
+        if (date > maxdate) { maxdate = date; }
     }
-    for (let key of x) {
-        y.push(chartDateData[key]);
+    let x = [], y = [];
+    for (let date = mindate; date < maxdate; date.setDate(date.getDate() + 1)) {
+        x.push(date.toLocaleDateString());
+        let tmp = 0;
+        for (let i = 0; i < 3; i++) {
+            let altdate = new Date(date);
+            altdate.setDate(date.getDate() + i);
+            tmp += counts[altdate.toISOString()] || 0;
+        }
+        y.push(tmp);
     }
     let chartDate = new Chart(ctx, {
         type: 'line',
@@ -240,35 +257,38 @@ function updateViewChartDate(chartDateData) {
         },
         options: {
             legend: {display: false},
-            title: {display: true, text: 'Apparition de symptome'},
+            title: {display: true, text: ['Apparition de symptome', '(moyenne glissante sur 3 jours)']},
             scales: {yAxes: [{ stacked: true }]}
         }
     });
 }
 
-function updateViewChartAge(chartAgeData) {
+function updateViewChartAge() {
+    let counts = {};
+    Object.assign(counts, data['age']);
     let ctx = document.getElementById('chart-age');
     let chartAge = new Chart(ctx, {
         type: 'line',
         data: {
             labels: ['0-10','10-20','20-30','30-40','40-50','50-60','60-70','70-80','80-90','90-100'],
             datasets: [
-                {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.mort, label: 'Morts', data: chartAgeData['mort']},
-                {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.gueri, label: 'Guéris', data: chartAgeData['gueri']},
-                {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.certain, label: 'Certain', data: chartAgeData['certain']},
-                {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.probable, label: 'Probable', data: chartAgeData['probable']},
-                {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.possible, label: 'Possible', data: chartAgeData['possible']},
+                {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.mort, label: 'Morts', data: counts['mort']},
+                {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.gueri, label: 'Guéris', data: counts['gueri']},
+                {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.certain, label: 'Certain', data: counts['certain']},
+                {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.probable, label: 'Probable', data: counts['probable']},
+                {pointRadius: 0, pointHitRadius: 15, backgroundColor: viewConfig.colors.possible, label: 'Possible', data: counts['possible']},
             ]
         },
         options: {
             legend: {display: false},
-            title: {display: true, text: 'Age (aires empillées)'},
+            title: {display: true, text: 'Age (aires empilées)'},
             scales: {yAxes: [{ stacked: true }]}
         }
     });
 }
 
-function updateViewChartSex(chartSexData) {
+function updateViewChartSex() {
+    let chartSexData = data['sex'];
     let ctx = document.getElementById('chart-sex');
     let chartPie = new Chart(ctx, {
         type: 'doughnut',
@@ -313,6 +333,8 @@ function updateViewChartSex(chartSexData) {
 }
 
 function boundaryInit(feature, layer) {
+    if (!feature || !layer) { return; }
+    feature.properties.popup = genPopup(feature);
     layer.bindPopup((l => l.feature.properties.popup),
         {closeButton: false, autoPan: false, offset: [0,-10]});
 
@@ -335,12 +357,20 @@ function boundaryInit(feature, layer) {
 }
 
 function boundaryStyle(feature, highlight = false) {
+    if (!feature) { return; }
     let style;
-    let count = 0;
-    if (feature.properties.hasOwnProperty('countCases')) {
-        if (feature.properties.countCases > 0) {
-            count = feature.properties.countCases;
-        }
+    let counts = {
+        'certain': 0,
+        'probable': 0,
+        'possible': 0,
+        'gueri': 0,
+        'mort': 0,
+        'total': 0
+    };
+    Object.assign(counts, (data['map'] || {})[feature.properties.insee]);
+    let count = counts.certain + counts.probable + counts.possible;
+    if (!count) {
+        count = 0;
     }
     if (highlight) {
         style = {
@@ -438,24 +468,33 @@ function genViewSelect() {
 
     radio0.addEventListener('change', function() {
         viewConfig.percent = false;
-        updateView(false);
+        updateViewMap();
     } );
     radio1.addEventListener('change', function() {
         viewConfig.percent = true;
-        updateView(false);
+        updateViewMap();
     } );
 
     return div;
 };
 
-function genPopup(feature, cases = {}) {
+function genPopup(feature) {
+    let counts = {
+        'certain': 0,
+        'probable': 0,
+        'possible': 0,
+        'gueri': 0,
+        'mort': 0,
+        'total': 0
+    };
+    Object.assign(counts, (data['map'] || {})[feature.properties.insee]);
     let population = feature.properties.population || 0;
-    let total = cases.total || 0;
-    let possible = cases.possible || 0;
-    let probable = cases.probable || 0;
-    let certain = cases.certain || 0;
-    let gueri = cases.gueri || 0;
-    let mort = cases.mort || 0;
+    let possible = counts.possible || 0;
+    let probable = counts.probable || 0;
+    let certain = counts.certain || 0;
+    let gueri = counts.gueri || 0;
+    let mort = counts.mort || 0;
+    let total = counts.total || 0;
 
     let elbase = document.createElement('div');
     {
@@ -535,16 +574,16 @@ function viewFilterDefault(cas) {
     if (['possible', 'probable', 'certain', 'gueri', 'mort'].indexOf(cas['Condition']) >= 0) {
         return cas;
     } else {
-        console.warn('Unknown condition "' + cas['Condition'] + '".');
+        console.warn('Unknown condition "'+cas['Condition']+'" ('+cas['Domicile']+').');
         return undefined;
     }
 }
 
 function toggleCollapse() {
-    viewConfig.collapsed = !viewConfig.collapsed;
+    viewConfig.sideCollapsed = !viewConfig.sideCollapsed;
 
     let aside = document.getElementsByTagName('aside')[0];
-    if (viewConfig.collapsed) {
+    if (viewConfig.sideCollapsed) {
         aside.classList.remove('uncollapsed');
         aside.classList.add('collapsed');
         document.getElementById('collapse-button').textContent = '›';
